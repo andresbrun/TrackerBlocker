@@ -23,6 +23,7 @@ public extension Target {
                 )
             ],
             dependencies: [
+                .external(name: "TrackerRadarKit")
             ],
             settings: .settings( 
                 configurations: AppCustomConfiguration.allCases.map { $0.targetConfiguration(for: .iOS) },

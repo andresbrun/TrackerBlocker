@@ -15,5 +15,7 @@ let packageSettings = PackageSettings(
 
 let package = Package(
     name: "TrackerBlockerMVP",
-    dependencies: []
+    dependencies: [
+        .package(url: "https://github.com/duckduckgo/TrackerRadarKit", exact: "2.1.2")
+    ]
 )
