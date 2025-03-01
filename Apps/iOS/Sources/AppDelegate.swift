@@ -13,7 +13,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         let webViewController = WebViewController(nibName: nil, bundle: nil)
         let navigationController = UINavigationController(rootViewController: webViewController)
-
+        navigationController.setNavigationBarHidden(true, animated: false)
+        
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
 

@@ -3,65 +3,160 @@ import WebKit
 
 class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDelegate {
     
-    private let webView = WKWebView()
-    private let addressBar = UITextField()
-    private let backButton = UIButton(type: .system)
-    private let forwardButton = UIButton(type: .system)
-    private let reloadButton = UIButton(type: .system)
+    // Constants
+    private let stackViewSpacing: CGFloat = 8.0
+    private let addressBarHeight: CGFloat = 40.0
+    private let toolbarHeight: CGFloat = 44.0
+    private let keyboardAnimationDuration: TimeInterval = 0.3
+    private let padding: CGFloat = 8.0
+
+    private lazy var webView: WKWebView = {
+        let webView = WKWebView()
+        webView.navigationDelegate = self
+        return webView
+    }()
     
+    private lazy var addressBar: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter URL"
+        textField.borderStyle = .roundedRect
+        textField.delegate = self
+        textField.autocapitalizationType = .none
+        textField.autocorrectionType = .no
+        textField.returnKeyType = .go
+        return textField
+    }()
+    
+    private lazy var backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("←", for: .normal)
+        button.addTarget(self, action: #selector(goBack), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var forwardButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("→", for: .normal)
+        button.addTarget(self, action: #selector(goForward), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var reloadButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("⟳", for: .normal)
+        button.addTarget(self, action: #selector(reloadPage), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var toolbar: UIStackView = {
+        let view = UIStackView(arrangedSubviews: [backButton, forwardButton, reloadButton])
+        view.axis = .horizontal
+        view.distribution = .equalSpacing
+        view.heightAnchor.constraint(equalToConstant: toolbarHeight).isActive = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var whiteListButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("WhiteList", for: .normal)
+        button.addTarget(self, action: #selector(whiteListAction), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var addressBarStackView: UIStackView = {
+        let view = UIStackView(
+            arrangedSubviews: [
+                whiteListButton,
+                addressBar
+            ]
+        )
+        view.axis = .horizontal
+        view.spacing = stackViewSpacing
+        view.heightAnchor.constraint(equalToConstant: addressBarHeight).isActive = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var addressBarAndToolbarView: UIStackView = {
+        let view = UIStackView(
+            arrangedSubviews: [
+                addressBarStackView,
+                toolbar
+            ]
+        )
+        view.axis = .vertical
+        view.spacing = padding
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var mainStackView: UIStackView = {
+        let view = UIStackView(
+            arrangedSubviews: [
+                webView,
+                addressBarAndToolbarView.padding(left: padding, right: padding)
+            ]
+        )
+        view.axis = .vertical
+        view.spacing = stackViewSpacing
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private var mainStackViewBottomConstraint: NSLayoutConstraint?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         loadDefaultPage()
+        setupKeyboardObservers()
     }
     
     private func setupUI() {
         view.backgroundColor = .white
-        webView.navigationDelegate = self
+        view.addSubview(mainStackView)
         
-        // Configure address bar
-        addressBar.placeholder = "Enter URL"
-        addressBar.borderStyle = .roundedRect
-        addressBar.delegate = self
-        addressBar.autocapitalizationType = .none
-        addressBar.autocorrectionType = .no
-        addressBar.returnKeyType = .go
+        mainStackViewBottomConstraint = mainStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         
-        // Configure buttons
-        backButton.setTitle("←", for: .normal)
-        backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
-        
-        forwardButton.setTitle("→", for: .normal)
-        forwardButton.addTarget(self, action: #selector(goForward), for: .touchUpInside)
-        
-        reloadButton.setTitle("⟳", for: .normal)
-        reloadButton.addTarget(self, action: #selector(reloadPage), for: .touchUpInside)
-        
-        // Toolbar
-        let toolbar = UIStackView(arrangedSubviews: [backButton, forwardButton, reloadButton])
-        toolbar.axis = .horizontal
-        toolbar.distribution = .equalSpacing
-        
-        // Layout
-        let stackView = UIStackView(arrangedSubviews: [addressBar, webView, toolbar])
-        stackView.axis = .vertical
-        stackView.spacing = 8
-        view.addSubview(stackView)
-        
-        stackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-            stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            
-            addressBar.heightAnchor.constraint(equalToConstant: 40),
-            toolbar.heightAnchor.constraint(equalToConstant: 44)
+            mainStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mainStackViewBottomConstraint!
         ])
     }
     
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    @objc private func keyboardWillShow(_ notification: Notification) {
+        if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+            let offset = view.safeAreaInsets.bottom - keyboardFrame.height
+            mainStackViewBottomConstraint?.constant = offset
+            let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? keyboardAnimationDuration
+            UIView.animate(withDuration: duration) {
+                self.view.layoutIfNeeded()
+            }
+        }
+    }
+    
+    @objc private func keyboardWillHide(_ notification: Notification) {
+        mainStackViewBottomConstraint?.constant = 0
+        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? keyboardAnimationDuration
+        UIView.animate(withDuration: duration) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
     private func loadDefaultPage() {
-        let url = URL(string: "https://www.apple.com")!
+        let url = URL(string: "https://www.duckduckgo.com")!
         webView.load(URLRequest(url: url))
         addressBar.text = url.absoluteString
     }
@@ -84,6 +179,10 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         webView.reload()
     }
     
+    @objc private func whiteListAction() {
+        // Implement the action for the WhiteList button
+    }
+    
     // MARK: - UITextFieldDelegate
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -98,6 +197,14 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
     // MARK: - WKNavigationDelegate
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
+        updateNavigationUI()
+    }
+    
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation?) {
+        updateNavigationUI()
+    }
+    
+    private func updateNavigationUI() {
         addressBar.text = webView.url?.absoluteString
         backButton.isEnabled = webView.canGoBack
         forwardButton.isEnabled = webView.canGoForward
