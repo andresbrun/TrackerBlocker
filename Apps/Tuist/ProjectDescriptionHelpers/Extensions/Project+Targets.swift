@@ -20,7 +20,8 @@ public extension Target {
                         "iOS/Supporting files/Infoplist/**",
                         "iOS/Supporting files/Entitlements/**"
                     ]
-                )
+                ),
+                .glob(pattern: "Resources/**")
             ],
             dependencies: [
                 .external(name: "TrackerRadarKit")
