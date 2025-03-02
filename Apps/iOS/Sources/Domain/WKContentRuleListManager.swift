@@ -18,14 +18,10 @@ class WKContentRuleListManager {
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     
     private var cancellables = Set<AnyCancellable>()
-    private let compilationQueue: OperationQueue = {
-        let queue = OperationQueue()
-        queue.maxConcurrentOperationCount = 1
-        return queue
-    }()
-
+    private var compilationTask: Task<Void, Never>?
+    
     private let logger = Logger.default
-
+    
     init(
         userDefaults: UserDefaultsProtocol,
         ruleListStore: ContentRuleListStoreProtocol,
@@ -41,9 +37,8 @@ class WKContentRuleListManager {
         self.whitelistDomainsUpdates = whitelistDomainsUpdates
         self.ruleListStateUpdates = ruleListStateUpdates
         
-//        onInit()
     }
-
+    
     public func onInit() {
         logger.info("Initializing WKContentRuleListManager")
         subscribeToWhitelistDomainsUpdates()
@@ -56,7 +51,7 @@ class WKContentRuleListManager {
             } else {
                 logger.warning("No cached rule list found, loading cached TDS")
                 let tdsData = await loadCachedTDS()
-                scheduleCompilationIfNeeded(
+                await scheduleCompilationIfNeeded(
                     with: tdsData,
                     whitelistDomains: whitelistDomainsUpdates.value,
                     reason: .initialLoad
@@ -68,7 +63,7 @@ class WKContentRuleListManager {
         Task {
             logger.info("Attempting to download new TDS file")
             guard let tdsData = await downloadTDSFileIfNeeded() else { return }
-            scheduleCompilationIfNeeded(
+            await scheduleCompilationIfNeeded(
                 with: tdsData,
                 whitelistDomains: whitelistDomainsUpdates.value,
                 reason: .newTDS
@@ -94,14 +89,16 @@ class WKContentRuleListManager {
                 let added = Set(newDomains).subtracting(oldDomains)
                 let removed = Set(oldDomains).subtracting(newDomains)
                 
-                scheduleCompilationIfNeeded(
-                    with: cachedData,
-                    whitelistDomains: newDomains,
-                    reason: .whitelistUpdated(
-                        added: Array(added),
-                        removed: Array(removed)
+                Task {
+                    await self.scheduleCompilationIfNeeded(
+                        with: cachedData,
+                        whitelistDomains: newDomains,
+                        reason: .whitelistUpdated(
+                            added: Array(added),
+                            removed: Array(removed)
+                        )
                     )
-                )
+                }
             }
             .store(in: &cancellables)
     }
@@ -114,7 +111,7 @@ class WKContentRuleListManager {
         logger.info("Publishing rule list for reason: \(String(describing: reason))")
         let state = RuleListStateUpdates(
             ruleList: ruleList,
-            reason: .initialLoad
+            reason: reason
         )
         ruleListStateUpdates.send(state)
     }
@@ -127,7 +124,7 @@ class WKContentRuleListManager {
             } else {
                 logger.warning("No rule list found, loading cached TDS")
                 let tdsData = await loadCachedTDS()
-                scheduleCompilationIfNeeded(
+                await scheduleCompilationIfNeeded(
                     with: tdsData,
                     whitelistDomains: whitelistDomainsUpdates.value,
                     reason: .initialLoad
@@ -137,7 +134,7 @@ class WKContentRuleListManager {
             logger.error("Error retrieving cached rule list: \(error.localizedDescription)")
             // TODO: Track error
             let tdsData = await loadCachedTDS()
-            scheduleCompilationIfNeeded(
+            await scheduleCompilationIfNeeded(
                 with: tdsData,
                 whitelistDomains: whitelistDomainsUpdates.value,
                 reason: .initialLoad
@@ -183,39 +180,36 @@ class WKContentRuleListManager {
     }
     
     // TODO: too big
+    @MainActor
     private func scheduleCompilationIfNeeded(
         with trackerData: Data,
         whitelistDomains: [String],
         reason: CompilationReason
     ) {
-        logger.info("Scheduling compilation for reason: \(String(describing: reason))")
-        compilationQueue.cancelAllOperations()
-        
-        let operation = BlockOperation { [weak self, logger] in
-            logger.info("Starting compilation operation")
+        let uuid = Int.random(in: 1...100)
+        logger.info("Compilation Task(\(uuid)): Scheduling compilation for reason: \(String(describing: reason))")
+
+        compilationTask?.cancel()
+        compilationTask = Task.detached { [weak self, logger] in
+            logger.info("Compilation Task(\(uuid)): Starting compilation operation")
             guard let self else { return }
-            // TODO: Change
-            var operation: Operation {
-                BlockOperation()
-            }
             
             let startTime = Date()
             let etag = self.userDefaults.string(forKey: Constants.EtagKey)
             
-            logger.info("Generating rule list identifier")
+            logger.info("Compilation Task(\(uuid)): Generating rule list identifier")
             let identifier = self.generateRuleListIdentifier(etag: etag, domains: whitelistDomains)
             
             let trackerDataModel: TrackerData
             do {
-                let trackerDataDecoded = String(data: trackerData, encoding: .utf8)!
-                logger.info("Decoding tracker data \(trackerDataDecoded)")
+                logger.info("Compilation Task(\(uuid)): Decoding tracker data")
                 trackerDataModel = try JSONDecoder().decode(TrackerData.self, from: trackerData)
             } catch {
-                logger.error("Failed to decode tracker data: \(error.localizedDescription)")
+                logger.error("Compilation Task(\(uuid)): Failed to decode tracker data: \(error.localizedDescription)")
                 return
             }
             
-            logger.info("Building content blocker rules")
+            logger.info("Compilation Task(\(uuid)): Building content blocker rules")
             let builder = ContentBlockerRulesBuilder(trackerData: trackerDataModel)
             let rules = builder.buildRules(
                 andTemporaryUnprotectedDomains: whitelistDomains
@@ -223,49 +217,45 @@ class WKContentRuleListManager {
             
             let data: Data
             do {
-                logger.info("Encoding rules to JSON")
+                logger.info("Compilation Task(\(uuid)): Encoding rules to JSON")
                 data = try JSONEncoder().encode(rules)
             } catch {
-                logger.error("Failed to encode rules: \(error.localizedDescription)")
+                logger.error("Compilation Task(\(uuid)): Failed to encode rules: \(error.localizedDescription)")
                 return
             }
             let jsonRules = String(data: data, encoding: .utf8)!
             
-            Task {
-                do {
-                    guard !operation.isCancelled else { 
-                        logger.info("Operation was cancelled")
-                        return 
-                    }
-                    logger.info("Compiling content rule list")
-                    let ruleList = try await self.ruleListStore.compileContentRuleList(
-                        forIdentifier: identifier,
-                        encodedContentRuleList: jsonRules
-                    )
-                    
-                    guard let ruleList = ruleList, !operation.isCancelled else {
-                        logger.error("Failed to compile rule list or operation was cancelled")
-                        self.trackError()
-                        return
-                    }
-                    
-                    logger.info("Clearing previous rule list")
-                    await self.clearPreviousRuleList()
-                    self.userDefaults.setValue(identifier, forKey: Constants.IdentifierKey)
-                    
-                    logger.info("Publishing new rule list")
-                    await self.publish(ruleList: ruleList, reason: reason)
-                    
-                    let duration = Date().timeIntervalSince(startTime)
-                    logger.info("Rule list compiled and published in \(duration) seconds")
-                } catch {
-                    logger.error("Error during rule list compilation: \(error.localizedDescription)")
-                    self.trackError()
+            do {
+                guard !Task.isCancelled else {
+                    logger.info("Compilation Task(\(uuid)): Operation was cancelled")
+                    return
                 }
+                logger.info("Compilation Task(\(uuid)): Compiling content rule list")
+                let ruleList = try await self.ruleListStore.compileContentRuleList(
+                    forIdentifier: identifier,
+                    encodedContentRuleList: jsonRules
+                )
+                
+                guard let ruleList = ruleList else {
+                    logger.error("Compilation Task(\(uuid)): Failed to compile rule list")
+                    self.trackError()
+                    return
+                }
+                
+                logger.info("Compilation Task(\(uuid)): Clearing previous rule list")
+                await self.clearPreviousRuleList()
+                self.userDefaults.setValue(identifier, forKey: Constants.IdentifierKey)
+                
+                logger.info("Compilation Task(\(uuid)): Publishing new rule list")
+                await self.publish(ruleList: ruleList, reason: reason)
+                
+                let duration = Date().timeIntervalSince(startTime)
+                logger.info("Compilation Task(\(uuid)): Rule list compiled and published in \(duration) seconds")
+            } catch {
+                logger.error("Compilation Task(\(uuid)): Error during rule list compilation: \(error.localizedDescription)")
+                self.trackError()
             }
-        }
-        
-        compilationQueue.addOperation(operation)
+        }        
     }
     
     private func clearPreviousRuleList() async {
@@ -279,7 +269,7 @@ class WKContentRuleListManager {
         // TODO: Add tracker
         print("Error compiling WKContentRuleList")
     }
-
+    
     private func generateRuleListIdentifier(etag: String?, domains: [String]) -> String {
         // TODO: Create Identifier, sort domains
         // Implement your logic to generate a unique identifier based on the etag and domains
