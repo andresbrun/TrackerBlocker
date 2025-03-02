@@ -27,10 +27,10 @@ class WKContentRuleListManager {
     private let logger = Logger.default
 
     init(
-        userDefaults: UserDefaultsProtocol = UserDefaults.standard,
-        ruleListStore: ContentRuleListStoreProtocol = WKContentRuleListStore.default(),
-        tdsAPI: TrackerDataSetAPI = DefaultTrackerDataSetAPI(),
-        fileCache: TDSFileStorageCache = DefaultTDSFileStorageCache(),
+        userDefaults: UserDefaultsProtocol,
+        ruleListStore: ContentRuleListStoreProtocol,
+        tdsAPI: TrackerDataSetAPI,
+        fileCache: TDSFileStorageCache,
         whitelistDomainsUpdates: CurrentValueSubject<[String], Never>,
         ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     ) {
@@ -41,10 +41,10 @@ class WKContentRuleListManager {
         self.whitelistDomainsUpdates = whitelistDomainsUpdates
         self.ruleListStateUpdates = ruleListStateUpdates
         
-        onInit()
+//        onInit()
     }
 
-    private func onInit() {
+    public func onInit() {
         logger.info("Initializing WKContentRuleListManager")
         subscribeToWhitelistDomainsUpdates()
         
@@ -106,6 +106,7 @@ class WKContentRuleListManager {
             .store(in: &cancellables)
     }
     
+    @MainActor
     private func publish(
         ruleList: WKContentRuleList,
         reason: CompilationReason
@@ -122,7 +123,7 @@ class WKContentRuleListManager {
         do {
             logger.info("Looking up content rule list for identifier: \(identifier)")
             if let ruleList = try await ruleListStore.lookUpContentRuleList(forIdentifier: identifier) {
-                publish(ruleList: ruleList, reason: .initialLoad)
+                await publish(ruleList: ruleList, reason: .initialLoad)
             } else {
                 logger.warning("No rule list found, loading cached TDS")
                 let tdsData = await loadCachedTDS()
@@ -206,7 +207,8 @@ class WKContentRuleListManager {
             
             let trackerDataModel: TrackerData
             do {
-                logger.info("Decoding tracker data")
+                let trackerDataDecoded = String(data: trackerData, encoding: .utf8)!
+                logger.info("Decoding tracker data \(trackerDataDecoded)")
                 trackerDataModel = try JSONDecoder().decode(TrackerData.self, from: trackerData)
             } catch {
                 logger.error("Failed to decode tracker data: \(error.localizedDescription)")
@@ -252,7 +254,7 @@ class WKContentRuleListManager {
                     self.userDefaults.setValue(identifier, forKey: Constants.IdentifierKey)
                     
                     logger.info("Publishing new rule list")
-                    self.publish(ruleList: ruleList, reason: reason)
+                    await self.publish(ruleList: ruleList, reason: reason)
                     
                     let duration = Date().timeIntervalSince(startTime)
                     logger.info("Rule list compiled and published in \(duration) seconds")

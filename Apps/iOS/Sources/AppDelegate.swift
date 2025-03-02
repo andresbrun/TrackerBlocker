@@ -13,7 +13,7 @@ class AppCompositionRoot {
         CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
     }()
     
-    func createWKContentRuleListManager() -> WKContentRuleListManager {
+    lazy var wkContentRuleListManager: WKContentRuleListManager = {
         WKContentRuleListManager(
             userDefaults: UserDefaults.standard,
             ruleListStore: WKContentRuleListStore.default(),
@@ -22,11 +22,10 @@ class AppCompositionRoot {
             whitelistDomainsUpdates: whitelistDomainsUpdates,
             ruleListStateUpdates: ruleListStateUpdates
         )
-    }
+    }()
     
     func createWebViewController() -> WebViewController {
-        _ = createWKContentRuleListManager()
-        return WebViewController(nibName: nil, bundle: nil)
+        WebViewController(nibName: nil, bundle: nil)
     }
 }
 
@@ -36,20 +35,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     private lazy var appCompositionRoot: AppCompositionRoot = .init()
-
+    
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         window = UIWindow(frame: UIScreen.main.bounds)
-
+        
         let webViewController = appCompositionRoot.createWebViewController()
         let navigationController = UINavigationController(rootViewController: webViewController)
         navigationController.setNavigationBarHidden(true, animated: false)
-        
         window?.rootViewController = navigationController
+        
+        // TODO: Change
+        if NSClassFromString("XCTestCase") == nil {
+            appCompositionRoot.wkContentRuleListManager.onInit()
+        }
+        
         window?.makeKeyAndVisible()
-
+        
         return true
     }
 }

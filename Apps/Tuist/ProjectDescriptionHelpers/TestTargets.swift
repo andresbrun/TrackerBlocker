@@ -41,7 +41,7 @@ extension Target {
             name: "Unit",
             product: .unitTests,
             dependencies: [
-//                .target(name: "TrackerBlockerMVP"),
+                .target(name: "iOS")
 //                .target(name: "DuckSnapshotTesting"),
 //                .testing
             ]
