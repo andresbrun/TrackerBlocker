@@ -97,13 +97,20 @@ extension Data {
 
 class MockTrackerDataSetAPI: TrackerDataSetAPI {
     var shouldFailDownload = false
+    var shouldReturnNewEtag = true
     
-    func downloadLatestTDS(withETag: String?) async throws -> (data: Data?, etag: String?) {
+    func downloadLatestTDS(
+        withETag: String?
+    ) async throws -> (data: Data?, etag: String?) {
+        try await Task.sleep(for: .seconds(0.1))
         if shouldFailDownload {
             throw NSError(domain: "NetworkError", code: -1, userInfo: nil)
         }
-        await Thread.sleep(until: Date().addingTimeInterval(0.1))
-        return (.mockedTDS, "newETag")
+        if shouldReturnNewEtag {
+            return (.mockedTDS, "newETag")
+        } else {
+            return (nil, nil)
+        }
     }
 }
 
@@ -134,6 +141,123 @@ class WKContentRuleListManagerTests: XCTestCase {
         resetMocks()
     }
     
+    func testInitWithNoRulesCachedAndTDSNewETag() {
+        // ARRANGE
+        ruleListStore.mockCompilationSuccess = true
+        tdsAPI.shouldFailDownload = false
+        
+        // ACT
+        manager.onInit()
+        
+        // ASSERT
+        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+    }
+    
+    func testInitWithCachedRulesAndNoNewEtag() {
+        // ARRANGE
+        userDefaults.setValue(
+            "existing_etag",
+            forKey: WKContentRuleListManager.Constants.EtagKey
+        )
+        userDefaults.setValue(
+            "existing_etag_",
+            forKey: WKContentRuleListManager.Constants.IdentifierKey
+        )
+        tdsAPI.shouldReturnNewEtag = false
+        tdsAPI.shouldFailDownload = false
+        ruleListStore.mockCompilationSuccess = true
+        ruleListStore.mockLookUpSuccess = true
+        
+        // ACT
+        manager.onInit()
+        
+        // ASSERT
+        assertRuleListUpdates(expected: [.initialLoad])
+    }
+    
+    // Should Compile last saved file
+    func testInitWithOrphanIdentifierAndNoNewETag() {
+        // ARRANGE
+        userDefaults.setValue(
+            "prev_existing_etag",
+            forKey: WKContentRuleListManager.Constants.EtagKey
+        )
+        userDefaults.setValue(
+            "existing_etag_",
+            forKey: WKContentRuleListManager.Constants.IdentifierKey
+        )
+        tdsAPI.shouldReturnNewEtag = false
+        tdsAPI.shouldFailDownload = false
+        ruleListStore.mockCompilationSuccess = true
+        ruleListStore.mockLookUpSuccess = false
+        
+        // ACT
+        manager.onInit()
+        
+        // ASSERT
+        assertRuleListUpdates(expected: [.initialLoad])
+    }
+    
+    func testWhiteListDomainsUpdates() {
+        let domain1 = "examples.domain1"
+        let domain2 = "examples.domain2"
+        
+        // ARRANGE
+        ruleListStore.mockCompilationSuccess = true
+        tdsAPI.shouldFailDownload = false
+        whitelistDomainsUpdates.send([domain1])
+        manager.onInit()
+        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+        
+        // ACT
+        whitelistDomainsUpdates.send([domain1, domain2])
+        
+        // ASSERT
+        assertRuleListUpdates(expected: [.whitelistUpdated(added: [domain2], removed: [])])
+    }
+    
+    func testMultipleWhiteListUpdatesOnlyTriggerOneUpdate() {
+        let domain1 = "examples.domain1"
+        let domain2 = "examples.domain2"
+        let domain3 = "examples.domain2"
+        
+        // ARRANGE
+        ruleListStore.mockCompilationSuccess = true
+        tdsAPI.shouldFailDownload = false
+        whitelistDomainsUpdates.send([domain1])
+        manager.onInit()
+        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+        
+        // ACT
+        whitelistDomainsUpdates.send([domain1, domain2])
+        whitelistDomainsUpdates.send([domain1])
+        whitelistDomainsUpdates.send([domain1, domain3])
+        
+        // ASSERT
+        assertRuleListUpdates(expected: [.whitelistUpdated(added: [domain3], removed: [])])
+    }
+    
+    func testAddRemoveSameWhiteListUpdatesNotTriggerAnyUpdate() {
+        let domain1 = "examples.domain1"
+        let domain2 = "examples.domain2"
+        
+        // ARRANGE
+        ruleListStore.mockCompilationSuccess = true
+        tdsAPI.shouldFailDownload = false
+        whitelistDomainsUpdates.send([domain1])
+        manager.onInit()
+        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+        
+        // ACT
+        whitelistDomainsUpdates.send([domain1, domain2])
+        whitelistDomainsUpdates.send([domain1])
+        
+        // ASSERT
+        assertNoRuleListUpdates()
+    }
+}
+
+extension WKContentRuleListManagerTests {
     private func resetMocks() {
         userDefaults = MockUserDefaults()
         ruleListStore = MockContentRuleListStore()
@@ -144,41 +268,40 @@ class WKContentRuleListManagerTests: XCTestCase {
         manager = createSut()
     }
     
-    ///userDefaults // ETag e Identifier
-    ///ruleListStore // lookup  and compile
-    ///tdsAPI // downloadLatestTDS
-    ///fileCache // safeFile, getData
-    ///Flows:
-    ///  Init with no cache (userDefaults Identifier) tdsAPI succeess (new Etag) -> 2 compilations .initial + .newTDS
-    ///
-    ///  Init with no cache (userDefaults Identifier)  tdsAPI failure -> 1 compilation .initial
-    ///  Init with cache tdsAPI succeess -> 2 compilations .initial + .newTDS
-    ///  Init with cache tdsAPI failure -> 1 compilation .initial
-    ///
+    private func assertNoRuleListUpdates() {
+        let expectation = XCTestExpectation(description: "Wait for no ruleListStateUpdates")
+        expectation.isInverted = true
+        
+        let cancellable = ruleListStateUpdates.dropFirst().sink { update in
+            guard update != nil else { return }
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 1.0)
+        
+        cancellable.cancel()
+    }
     
-    func testInitWithNoRulesCachedAndTDSNewETag() {
-        // ARRANGE
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
-        
-        // ACT
-        manager.onInit()
-        
-        // ASSERT
+    private func assertRuleListUpdates(
+        expected: [CompilationReason],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
         let expectation = XCTestExpectation(description: "Wait for ruleListStateUpdates")
+        expectation.expectedFulfillmentCount = expected.count
         
         var receivedReasons: [CompilationReason] = []
-        let cancellable = ruleListStateUpdates.sink { update in
+        // As it is a CurrentValueSubject we are not
+        // interested on the previous value
+        let cancellable = ruleListStateUpdates.dropFirst().sink { update in
             if let update = update {
                 receivedReasons.append(update.reason)
             }
-            if receivedReasons.count == 2 {
-                expectation.fulfill()
-            }
+            expectation.fulfill()
         }
         
-        wait(for: [expectation], timeout: 3.0)
-        XCTAssertEqual(receivedReasons, [.initialLoad, .newTDS])
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(receivedReasons, expected, file: file, line: line)
         
         cancellable.cancel()
     }
