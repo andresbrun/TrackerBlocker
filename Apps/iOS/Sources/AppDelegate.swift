@@ -24,8 +24,16 @@ class AppCompositionRoot {
         )
     }()
     
+    func createUserContentController() -> UserContentController {
+        UserContentController(
+            ruleListStateUpdates: ruleListStateUpdates
+        )
+    }
+    
     func createWebViewController() -> WebViewController {
-        WebViewController(nibName: nil, bundle: nil)
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController = createUserContentController()
+        return WebViewController(configuration: configuration)
     }
 }
 

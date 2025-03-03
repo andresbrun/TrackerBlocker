@@ -3,15 +3,29 @@ import WebKit
 
 class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDelegate {
     
+    private let configuration: WKWebViewConfiguration
+    
+    init(configuration: WKWebViewConfiguration) {
+        self.configuration = configuration
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // Constants
     private let stackViewSpacing: CGFloat = 8.0
     private let addressBarHeight: CGFloat = 40.0
     private let toolbarHeight: CGFloat = 44.0
     private let keyboardAnimationDuration: TimeInterval = 0.3
     private let padding: CGFloat = 8.0
-
+    
     private lazy var webView: WKWebView = {
-        let webView = WKWebView()
+        let webView = WKWebView(
+            frame: view.bounds,
+            configuration: configuration
+        )
         webView.navigationDelegate = self
         return webView
     }()
