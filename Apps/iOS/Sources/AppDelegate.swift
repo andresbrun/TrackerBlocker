@@ -33,7 +33,10 @@ class AppCompositionRoot {
     func createWebViewController() -> WebViewController {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = createUserContentController()
-        return WebViewController(configuration: configuration)
+        return WebViewController(
+            configuration: configuration,
+            ruleListStateUpdates: ruleListStateUpdates
+        )
     }
 }
 

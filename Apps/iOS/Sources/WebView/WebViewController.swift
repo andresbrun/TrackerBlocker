@@ -1,5 +1,6 @@
 import UIKit
 import WebKit
+import Combine
 
 class WebViewController: UIViewController {
     
@@ -14,11 +15,13 @@ class WebViewController: UIViewController {
     
     // MARK: - Dependencies
     private let configuration: WKWebViewConfiguration
+    private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     
     // MARK: - State
     private var lastContentOffset: CGFloat = 0
     private var isKeyboardVisible: Bool = false
     private var mainStackViewBottomConstraint: NSLayoutConstraint?
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - UI components
     private lazy var webView: WKWebView = {
@@ -126,8 +129,12 @@ class WebViewController: UIViewController {
         return progressView
     }()
     
-    init(configuration: WKWebViewConfiguration) {
+    init(
+        configuration: WKWebViewConfiguration,
+        ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
+    ) {
         self.configuration = configuration
+        self.ruleListStateUpdates = ruleListStateUpdates
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -160,6 +167,26 @@ class WebViewController: UIViewController {
             mainStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mainStackViewBottomConstraint!
         ])
+    }
+    
+    private func subscribeToRuleListStateUpdates() {
+        ruleListStateUpdates
+            .sink { [weak self] stateUpdates in
+                guard let self = self else { return }
+                
+                switch stateUpdates?.reason {
+                case .whitelistUpdated(let added, let removed):
+                    guard let urlLoaded = webView.url?.host() else {
+                        return
+                    }
+                    if added.contains(urlLoaded) {
+                        print("BINGO")
+                    }
+                    
+                default:
+                    break
+                }
+            }.store(in: &cancellables)
     }
     
     private func setupKeyboardObservers() {
@@ -280,6 +307,7 @@ extension WebViewController: WKNavigationDelegate {
 extension WebViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard !isKeyboardVisible else { return }
+        guard scrollView.isDragging else { return }
         let currentOffset = scrollView.contentOffset.y
         guard currentOffset > minThreasholdToHideBottomView else { return }
         
