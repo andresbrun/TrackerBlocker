@@ -4,147 +4,27 @@ import WebKit
 
 @testable import iOS
 
-// Mock classes
-class MockUserDefaults: UserDefaultsProtocol {
-    private var storage = [String: Any]()
-    
-    func string(forKey defaultName: String) -> String? {
-        return storage[defaultName] as? String
-    }
-    
-    func setValue(_ value: Any?, forKey key: String) {
-        storage[key] = value
-    }
-}
-
-class MockContentRuleListStore: ContentRuleListStoreProtocol {
-    var mockCompilationSuccess: Bool = false
-    var mockLookUpSuccess: Bool = false
-    
-    func lookUpContentRuleList(forIdentifier identifier: String) async throws -> WKContentRuleList? {
-        if mockLookUpSuccess {
-            return await WKContentRuleList()
-        } else {
-            return nil
-        }
-    }
-    
-    func compileContentRuleList(forIdentifier identifier: String, encodedContentRuleList: String) async throws -> WKContentRuleList? {
-        if mockCompilationSuccess {
-            return await WKContentRuleList()
-        } else {
-            return nil
-        }
-    }
-    
-    func removeContentRuleList(forIdentifier identifier: String) async throws {}
-}
-
-extension Data {
-    static var mockedData: [String: Any] = [
-        "trackers": [
-            "1558334541.rsc.cdn77.org": [
-                "domain": "1558334541.rsc.cdn77.org",
-                "owner": [
-                    "name": "DataCamp Limited",
-                    "displayName": "DataCamp"
-                ],
-                "prevalence": 0.0000613,
-                "fingerprinting": 3,
-                "cookies": 0.0000545,
-                "categories": [],
-                "default": "ignore",
-                "rules": [
-                    [
-                        "rule": "1558334541\\.rsc\\.cdn77\\.org\\/nfs\\/20221227\\/etp\\.min\\.js",
-                        "fingerprinting": 3,
-                        "cookies": 0.0000136
-                    ],
-                    [
-                        "rule": "1558334541\\.rsc\\.cdn77\\.org\\/nfs\\/20221104\\/etpnoauid\\.min\\.js",
-                        "fingerprinting": 3,
-                        "cookies": 0.0000136
-                    ]
-                ]
-            ]
-        ],
-        "entities": [
-            "DataCamp Limited": [
-                "domains": [
-                    "cdn77.org",
-                    "datacamp.com",
-                    "rdocumentation.org"
-                ],
-                "prevalence": 0.0551,
-                "displayName": "DataCamp"
-            ]
-        ],
-        "domains": [
-            "cdn77.org": "DataCamp Limited"
-        ],
-        "cnames": [
-            "aax-eu.amazon.se": "aax-eu-retail-direct.amazon-adsystem.com"
-        ]
-    ]
-    
-    static var mockedTDS: Data {
-        try! JSONSerialization.data(
-            withJSONObject: mockedData,
-            options: []
-        )
-    }
-}
-
-class MockTrackerDataSetAPI: TrackerDataSetAPI {
-    var shouldFailDownload = false
-    var shouldReturnNewEtag = true
-    
-    func downloadLatestTDS(
-        withETag: String?
-    ) async throws -> (data: Data?, etag: String?) {
-        try await Task.sleep(for: .seconds(0.1))
-        if shouldFailDownload {
-            throw NSError(domain: "NetworkError", code: -1, userInfo: nil)
-        }
-        if shouldReturnNewEtag {
-            return (.mockedTDS, "newETag")
-        } else {
-            return (nil, nil)
-        }
-    }
-}
-
-class MockTDSFileStorageCache: TDSFileStorageCache {
-    var savedInvocation: (Data, String)?
-    
-    func save(_ data: Data, forETag etag: String) {
-        savedInvocation = (data, etag)
-    }
-    
-    func getData(forETag etag: String?) throws -> Data {
-        .mockedTDS
-    }
-}
-
-// Test class
 class WKContentRuleListManagerTests: XCTestCase {
-    var userDefaults: MockUserDefaults!
-    var ruleListStore: MockContentRuleListStore!
-    var tdsAPI: MockTrackerDataSetAPI!
-    var fileCache: MockTDSFileStorageCache!
-    var whitelistDomainsUpdates: CurrentValueSubject<[String], Never>!
-    var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>!
-    var manager: WKContentRuleListManager!
+    private let domain1 = "examples.domain1"
+    private let domain2 = "examples.domain2"
+    private let domain3 = "examples.domain2"
+    
+    private var userDefaults: MockUserDefaults!
+    private var ruleListStore: MockContentRuleListStore!
+    private var tdsAPI: MockTrackerDataSetAPI!
+    private var fileCache: MockTDSFileStorageCache!
+    private var whitelistDomainsUpdates: CurrentValueSubject<[String], Never>!
+    private var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>!
+    private var manager: WKContentRuleListManager!
     
     override func setUp() {
         super.setUp()
         resetMocks()
     }
     
-    func testInitWithNoRulesCachedAndTDSNewETag() {
+    func testInitWithNoRulesCachedAndTDSNewETagTriggersInitialLoadAndNewTDS() {
         // ARRANGE
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
+        arrangeForNoRulesCachedAndTDSNewETag()
         
         // ACT
         manager.onInit()
@@ -153,20 +33,9 @@ class WKContentRuleListManagerTests: XCTestCase {
         assertRuleListUpdates(expected: [.initialLoad, .newTDS])
     }
     
-    func testInitWithCachedRulesAndNoNewEtag() {
+    func testInitWithCachedRulesAndNoNewEtagTriggersInitialLoad() {
         // ARRANGE
-        userDefaults.setValue(
-            "existing_etag",
-            forKey: WKContentRuleListManager.Constants.EtagKey
-        )
-        userDefaults.setValue(
-            "existing_etag_",
-            forKey: WKContentRuleListManager.Constants.IdentifierKey
-        )
-        tdsAPI.shouldReturnNewEtag = false
-        tdsAPI.shouldFailDownload = false
-        ruleListStore.mockCompilationSuccess = true
-        ruleListStore.mockLookUpSuccess = true
+        arrangeForCachedRulesAndNoNewEtag()
         
         // ACT
         manager.onInit()
@@ -175,21 +44,9 @@ class WKContentRuleListManagerTests: XCTestCase {
         assertRuleListUpdates(expected: [.initialLoad])
     }
     
-    // Should Compile last saved file
-    func testInitWithOrphanIdentifierAndNoNewETag() {
+    func testInitWithOrphanIdentifierAndNoNewETagTriggersInitialLoad() {
         // ARRANGE
-        userDefaults.setValue(
-            "prev_existing_etag",
-            forKey: WKContentRuleListManager.Constants.EtagKey
-        )
-        userDefaults.setValue(
-            "existing_etag_",
-            forKey: WKContentRuleListManager.Constants.IdentifierKey
-        )
-        tdsAPI.shouldReturnNewEtag = false
-        tdsAPI.shouldFailDownload = false
-        ruleListStore.mockCompilationSuccess = true
-        ruleListStore.mockLookUpSuccess = false
+        arrangeForOrphanIdentifierAndNoNewETag()
         
         // ACT
         manager.onInit()
@@ -198,16 +55,9 @@ class WKContentRuleListManagerTests: XCTestCase {
         assertRuleListUpdates(expected: [.initialLoad])
     }
     
-    func testWhiteListDomainsUpdates() {
-        let domain1 = "examples.domain1"
-        let domain2 = "examples.domain2"
-        
+    func testWhiteListDomainsUpdatesTriggersOneUpdate() {
         // ARRANGE
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
-        whitelistDomainsUpdates.send([domain1])
-        manager.onInit()
-        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+        arrangeForWhiteListDomainsUpdates(initialDomain: domain1)
         
         // ACT
         whitelistDomainsUpdates.send([domain1, domain2])
@@ -216,17 +66,9 @@ class WKContentRuleListManagerTests: XCTestCase {
         assertRuleListUpdates(expected: [.whitelistUpdated(added: [domain2], removed: [])])
     }
     
-    func testMultipleWhiteListUpdatesOnlyTriggerOneUpdate() {
-        let domain1 = "examples.domain1"
-        let domain2 = "examples.domain2"
-        let domain3 = "examples.domain2"
-        
+    func testMultipleWhiteListUpdatesOnlyTriggersOneUpdate() {
         // ARRANGE
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
-        whitelistDomainsUpdates.send([domain1])
-        manager.onInit()
-        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+        arrangeForWhiteListDomainsUpdates(initialDomain: domain1)
         
         // ACT
         whitelistDomainsUpdates.send([domain1, domain2])
@@ -238,15 +80,8 @@ class WKContentRuleListManagerTests: XCTestCase {
     }
     
     func testAddRemoveSameWhiteListUpdatesNotTriggerAnyUpdate() {
-        let domain1 = "examples.domain1"
-        let domain2 = "examples.domain2"
-        
         // ARRANGE
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
-        whitelistDomainsUpdates.send([domain1])
-        manager.onInit()
-        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+        arrangeForWhiteListDomainsUpdates(initialDomain: domain1)
         
         // ACT
         whitelistDomainsUpdates.send([domain1, domain2])
@@ -268,6 +103,51 @@ extension WKContentRuleListManagerTests {
         manager = createSut()
     }
     
+    // MARK: - ARRANGE
+    private func arrangeForNoRulesCachedAndTDSNewETag() {
+        ruleListStore.mockCompilationSuccess = true
+        tdsAPI.shouldFailDownload = false
+    }
+
+    private func arrangeForCachedRulesAndNoNewEtag() {
+        userDefaults.setValue(
+            "existing_etag",
+            forKey: WKContentRuleListManager.Constants.EtagKey
+        )
+        userDefaults.setValue(
+            "existing_etag_",
+            forKey: WKContentRuleListManager.Constants.IdentifierKey
+        )
+        tdsAPI.shouldReturnNewEtag = false
+        tdsAPI.shouldFailDownload = false
+        ruleListStore.mockCompilationSuccess = true
+        ruleListStore.mockLookUpSuccess = true
+    }
+
+    private func arrangeForOrphanIdentifierAndNoNewETag() {
+        userDefaults.setValue(
+            "prev_existing_etag",
+            forKey: WKContentRuleListManager.Constants.EtagKey
+        )
+        userDefaults.setValue(
+            "existing_etag_",
+            forKey: WKContentRuleListManager.Constants.IdentifierKey
+        )
+        tdsAPI.shouldReturnNewEtag = false
+        tdsAPI.shouldFailDownload = false
+        ruleListStore.mockCompilationSuccess = true
+        ruleListStore.mockLookUpSuccess = false
+    }
+
+    private func arrangeForWhiteListDomainsUpdates(initialDomain: String) {
+        ruleListStore.mockCompilationSuccess = true
+        tdsAPI.shouldFailDownload = false
+        whitelistDomainsUpdates.send([initialDomain])
+        manager.onInit()
+        assertRuleListUpdates(expected: [.initialLoad, .newTDS])
+    }
+
+    // MARK: - ASSERT
     private func assertNoRuleListUpdates() {
         let expectation = XCTestExpectation(description: "Wait for no ruleListStateUpdates")
         expectation.isInverted = true
@@ -306,6 +186,7 @@ extension WKContentRuleListManagerTests {
         cancellable.cancel()
     }
     
+    // MARK: - HELPERS
     private func createSut() -> WKContentRuleListManager {
         WKContentRuleListManager(
             userDefaults: userDefaults,
@@ -321,10 +202,14 @@ extension WKContentRuleListManagerTests {
 extension CompilationReason: @retroactive Equatable {
     public static func == (lhs: CompilationReason, rhs: CompilationReason) -> Bool {
         switch (lhs, rhs) {
-        case (.initialLoad, .initialLoad): true
-        case (.newTDS, .newTDS): true
-        case (.whitelistUpdated(let lhsAdded, let lhsRemoved), .whitelistUpdated(let rhsAdded, let rhsRemoved)): lhsAdded == rhsAdded && lhsRemoved == rhsRemoved
-        default: false
+        case (.initialLoad, .initialLoad): 
+            true
+        case (.newTDS, .newTDS): 
+            true
+        case (.whitelistUpdated(let lhsAdded, let lhsRemoved), .whitelistUpdated(let rhsAdded, let rhsRemoved)): 
+            lhsAdded == rhsAdded && lhsRemoved == rhsRemoved
+        default: 
+            false
         }
     }
 }
