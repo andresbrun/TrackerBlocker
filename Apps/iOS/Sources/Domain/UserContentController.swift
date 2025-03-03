@@ -29,7 +29,7 @@ final public class UserContentController: WKUserContentController {
         ruleListStateUpdates
             .sink { [weak self] stateUpdates in
                 guard let self, let stateUpdates = stateUpdates else { return }
-                ruleList = stateUpdates?.ruleList
+                ruleList = stateUpdates.ruleList
             }
             .store(in: &cancellables)
     }

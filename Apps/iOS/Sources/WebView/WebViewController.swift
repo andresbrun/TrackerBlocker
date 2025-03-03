@@ -1,32 +1,32 @@
 import UIKit
 import WebKit
 
-class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDelegate {
+class WebViewController: UIViewController {
     
-    private let configuration: WKWebViewConfiguration
-    
-    init(configuration: WKWebViewConfiguration) {
-        self.configuration = configuration
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    // Constants
+    // MARK: - Constants
     private let stackViewSpacing: CGFloat = 8.0
     private let addressBarHeight: CGFloat = 40.0
     private let toolbarHeight: CGFloat = 44.0
     private let keyboardAnimationDuration: TimeInterval = 0.3
+    private let scrollAnimationDuration: TimeInterval = 0.3
     private let padding: CGFloat = 8.0
+    private let minThreasholdToHideBottomView: CGFloat = 100.0
     
+    // MARK: - Dependencies
+    private let configuration: WKWebViewConfiguration
+    
+    // MARK: - State
+    private var lastContentOffset: CGFloat = 0
+    private var mainStackViewBottomConstraint: NSLayoutConstraint?
+    
+    // MARK: - UI components
     private lazy var webView: WKWebView = {
         let webView = WKWebView(
             frame: view.bounds,
             configuration: configuration
         )
         webView.navigationDelegate = self
+        webView.scrollView.delegate = self
         return webView
     }()
     
@@ -92,7 +92,7 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         return view
     }()
     
-    private lazy var addressBarAndToolbarView: UIStackView = {
+    private lazy var addressBarAndToolbarView: UIView = {
         let view = UIStackView(
             arrangedSubviews: [
                 addressBarStackView,
@@ -102,14 +102,14 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         view.axis = .vertical
         view.spacing = padding
         view.translatesAutoresizingMaskIntoConstraints = false
-        return view
+        return view.padding(left: padding, right: padding)
     }()
     
     private lazy var mainStackView: UIStackView = {
         let view = UIStackView(
             arrangedSubviews: [
                 webView,
-                addressBarAndToolbarView.padding(left: padding, right: padding)
+                addressBarAndToolbarView
             ]
         )
         view.axis = .vertical
@@ -118,8 +118,19 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         return view
     }()
     
-    private var mainStackViewBottomConstraint: NSLayoutConstraint?
-
+    init(configuration: WKWebViewConfiguration) {
+        self.configuration = configuration
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -165,10 +176,6 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         }
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
     private func loadDefaultPage() {
         let url = URL(string: "https://www.duckduckgo.com")!
         webView.load(URLRequest(url: url))
@@ -196,9 +203,9 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
     @objc private func whiteListAction() {
         // Implement the action for the WhiteList button
     }
-    
-    // MARK: - UITextFieldDelegate
-    
+}
+
+extension WebViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         guard let text = textField.text, let url = URL(string: text.hasPrefix("http") ? text : "https://\(text)") else {
             return false
@@ -207,9 +214,9 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         textField.resignFirstResponder()
         return true
     }
-    
-    // MARK: - WKNavigationDelegate
-    
+}
+
+extension WebViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         updateNavigationUI()
     }
@@ -222,5 +229,24 @@ class WebViewController: UIViewController, WKNavigationDelegate, UITextFieldDele
         addressBar.text = webView.url?.absoluteString
         backButton.isEnabled = webView.canGoBack
         forwardButton.isEnabled = webView.canGoForward
+    }
+}
+
+extension WebViewController: UIScrollViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let currentOffset = scrollView.contentOffset.y
+        guard currentOffset > minThreasholdToHideBottomView else { return }
+        
+        if currentOffset < lastContentOffset {
+            mainStackViewBottomConstraint?.constant = 0
+        } else if currentOffset > lastContentOffset {
+            mainStackViewBottomConstraint?.constant = addressBarAndToolbarView.frame.height + view.safeAreaInsets.bottom
+        }
+        
+        lastContentOffset = currentOffset
+        
+        UIView.animate(withDuration: scrollAnimationDuration) {
+            self.view.layoutIfNeeded()
+        }
     }
 }
