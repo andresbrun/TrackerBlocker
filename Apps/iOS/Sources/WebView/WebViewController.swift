@@ -17,6 +17,7 @@ class WebViewController: UIViewController {
     
     // MARK: - State
     private var lastContentOffset: CGFloat = 0
+    private var isKeyboardVisible: Bool = false
     private var mainStackViewBottomConstraint: NSLayoutConstraint?
     
     // MARK: - UI components
@@ -109,6 +110,7 @@ class WebViewController: UIViewController {
         let view = UIStackView(
             arrangedSubviews: [
                 webView,
+                progressBar,
                 addressBarAndToolbarView
             ]
         )
@@ -116,6 +118,12 @@ class WebViewController: UIViewController {
         view.spacing = stackViewSpacing
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
+    }()
+    
+    private lazy var progressBar: UIProgressView = {
+        let progressView = UIProgressView(progressViewStyle: .default)
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        return progressView
     }()
     
     init(configuration: WKWebViewConfiguration) {
@@ -128,14 +136,16 @@ class WebViewController: UIViewController {
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        removeObservers()
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupUI()
         loadDefaultPage()
         setupKeyboardObservers()
+        setupEstimatedProgressObserver()
     }
     
     private func setupUI() {
@@ -153,14 +163,41 @@ class WebViewController: UIViewController {
     }
     
     private func setupKeyboardObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow(_:)),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide(_:)),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+    }
+    
+    private func setupEstimatedProgressObserver() {
+        webView.addObserver(
+            self,
+            forKeyPath: #keyPath(WKWebView.estimatedProgress),
+            options: .new,
+            context: nil
+        )
+    }
+    
+    private func removeObservers() {
+        NotificationCenter.default.removeObserver(self)
+        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
     }
     
     @objc private func keyboardWillShow(_ notification: Notification) {
+        guard addressBar.isFirstResponder else { return }
+        
         if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
             let offset = view.safeAreaInsets.bottom - keyboardFrame.height
             mainStackViewBottomConstraint?.constant = offset
+            isKeyboardVisible = true
             let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? keyboardAnimationDuration
             UIView.animate(withDuration: duration) {
                 self.view.layoutIfNeeded()
@@ -170,6 +207,7 @@ class WebViewController: UIViewController {
     
     @objc private func keyboardWillHide(_ notification: Notification) {
         mainStackViewBottomConstraint?.constant = 0
+        isKeyboardVisible = false
         let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? keyboardAnimationDuration
         UIView.animate(withDuration: duration) {
             self.view.layoutIfNeeded()
@@ -203,6 +241,13 @@ class WebViewController: UIViewController {
     @objc private func whiteListAction() {
         // Implement the action for the WhiteList button
     }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == #keyPath(WKWebView.estimatedProgress) {
+            progressBar.progress = Float(webView.estimatedProgress)
+            progressBar.isHidden = webView.estimatedProgress == 1
+        }
+    }
 }
 
 extension WebViewController: UITextFieldDelegate {
@@ -234,6 +279,7 @@ extension WebViewController: WKNavigationDelegate {
 
 extension WebViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard !isKeyboardVisible else { return }
         let currentOffset = scrollView.contentOffset.y
         guard currentOffset > minThreasholdToHideBottomView else { return }
         
