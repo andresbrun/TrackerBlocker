@@ -24,7 +24,13 @@ class AppCompositionRoot {
         )
     }()
     
-    func createUserContentController() -> UserContentController {
+    private lazy var whitelistDomainsManager: WhitelistDomainsManager = {
+        DefaultWhitelistDomainsManager(
+            whitelistDomainsUpdates: whitelistDomainsUpdates
+        )
+    }()
+    
+    private func createUserContentController() -> UserContentController {
         UserContentController(
             ruleListStateUpdates: ruleListStateUpdates
         )
@@ -35,6 +41,7 @@ class AppCompositionRoot {
         configuration.userContentController = createUserContentController()
         return WebViewController(
             configuration: configuration,
+            whitelistDomainsManager: whitelistDomainsManager,
             ruleListStateUpdates: ruleListStateUpdates
         )
     }

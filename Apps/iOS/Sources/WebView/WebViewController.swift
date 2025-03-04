@@ -1,6 +1,7 @@
 import UIKit
 import WebKit
 import Combine
+import os
 
 class WebViewController: UIViewController {
     
@@ -15,6 +16,7 @@ class WebViewController: UIViewController {
     
     // MARK: - Dependencies
     private let configuration: WKWebViewConfiguration
+    private let whitelistDomainsManager: WhitelistDomainsManager
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     
     // MARK: - State
@@ -131,9 +133,11 @@ class WebViewController: UIViewController {
     
     init(
         configuration: WKWebViewConfiguration,
+        whitelistDomainsManager: WhitelistDomainsManager,
         ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     ) {
         self.configuration = configuration
+        self.whitelistDomainsManager = whitelistDomainsManager
         self.ruleListStateUpdates = ruleListStateUpdates
         super.init(nibName: nil, bundle: nil)
     }
@@ -153,6 +157,7 @@ class WebViewController: UIViewController {
         loadDefaultPage()
         setupKeyboardObservers()
         setupEstimatedProgressObserver()
+        subscribeToRuleListStateUpdates()
     }
     
     private func setupUI() {
@@ -171,16 +176,17 @@ class WebViewController: UIViewController {
     
     private func subscribeToRuleListStateUpdates() {
         ruleListStateUpdates
+            .delay(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .sink { [weak self] stateUpdates in
-                guard let self = self else { return }
+                guard let self else { return }
                 
                 switch stateUpdates?.reason {
                 case .whitelistUpdated(let added, let removed):
-                    guard let urlLoaded = webView.url?.host() else {
+                    guard let hostLoaded = webView.url?.host() else {
                         return
                     }
-                    if added.contains(urlLoaded) {
-                        print("BINGO")
+                    if (added + removed).contains(hostLoaded) {
+                        reloadCurrentPage()
                     }
                     
                 default:
@@ -247,6 +253,11 @@ class WebViewController: UIViewController {
         addressBar.text = url.absoluteString
     }
     
+    private func reloadCurrentPage() {
+        guard let currentURL = webView.url else { return }
+        webView.load(URLRequest(url: currentURL))
+    }
+    
     // MARK: - Actions
     
     @objc private func goBack() {
@@ -267,6 +278,16 @@ class WebViewController: UIViewController {
     
     @objc private func whiteListAction() {
         // Implement the action for the WhiteList button
+        guard let currentHost = webView.url?.host() else { return }
+        Task {
+            if await whitelistDomainsManager.getAll().contains(currentHost) {
+                Logger.default.info("Removing \(currentHost) from whitelist")
+                await whitelistDomainsManager.remove(currentHost)
+            } else {
+                Logger.default.info("Adding \(currentHost) in whitelist")
+                await whitelistDomainsManager.add(currentHost)
+            }
+        }
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
