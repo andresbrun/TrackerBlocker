@@ -1,58 +1,17 @@
 import UIKit
-
-import Combine
-import WebKit
 import Foundation
-
-class AppCompositionRoot {
-    private lazy var whitelistDomainsUpdates: CurrentValueSubject<[String], Never> = {
-        CurrentValueSubject<[String], Never>([])
-    }()
-    
-    private lazy var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never> = {
-        CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
-    }()
-    
-    lazy var wkContentRuleListManager: WKContentRuleListManager = {
-        WKContentRuleListManager(
-            userDefaults: UserDefaults.standard,
-            ruleListStore: WKContentRuleListStore.default(),
-            tdsAPI: DefaultTrackerDataSetAPI(),
-            fileCache: DefaultTDSFileStorageCache(),
-            whitelistDomainsUpdates: whitelistDomainsUpdates,
-            ruleListStateUpdates: ruleListStateUpdates
-        )
-    }()
-    
-    private lazy var whitelistDomainsManager: WhitelistDomainsManager = {
-        DefaultWhitelistDomainsManager(
-            whitelistDomainsUpdates: whitelistDomainsUpdates
-        )
-    }()
-    
-    private func createUserContentController() -> UserContentController {
-        UserContentController(
-            ruleListStateUpdates: ruleListStateUpdates
-        )
-    }
-    
-    func createWebViewController() -> WebViewController {
-        let configuration = WKWebViewConfiguration()
-        configuration.userContentController = createUserContentController()
-        return WebViewController(
-            configuration: configuration,
-            whitelistDomainsManager: whitelistDomainsManager,
-            ruleListStateUpdates: ruleListStateUpdates
-        )
-    }
-}
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     
-    private lazy var appCompositionRoot: AppCompositionRoot = .init()
+    private lazy var appCompositionRoot: AppCompositionRoot = {
+        AppCompositionRoot()
+    }()
+    private lazy var rootNavigator: RootNavigator = {
+        AppRootNavigator(appCompositionRoot: appCompositionRoot)
+    }()
     
     func application(
         _ application: UIApplication,
@@ -60,17 +19,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         window = UIWindow(frame: UIScreen.main.bounds)
         
-        let webViewController = appCompositionRoot.createWebViewController()
-        let navigationController = UINavigationController(rootViewController: webViewController)
-        navigationController.setNavigationBarHidden(true, animated: false)
-        window?.rootViewController = navigationController
+        rootNavigator.initializeNavigation(in: window!)
         
-        // TODO: Change
-        if NSClassFromString("XCTestCase") == nil {
-            appCompositionRoot.wkContentRuleListManager.onInit()
-        }
-        
-        window?.makeKeyAndVisible()
+        window!.makeKeyAndVisible()
         
         return true
     }

@@ -18,6 +18,7 @@ class WebViewController: UIViewController {
     private let configuration: WKWebViewConfiguration
     private let whitelistDomainsManager: WhitelistDomainsManager
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
+    private unowned let navigator: RootNavigator
     
     // MARK: - State
     private var lastContentOffset: CGFloat = 0
@@ -77,17 +78,25 @@ class WebViewController: UIViewController {
         return view
     }()
     
-    private lazy var whiteListButton: UIButton = {
+    private lazy var toggleWhitelistDomainButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("WhiteList", for: .normal)
-        button.addTarget(self, action: #selector(whiteListAction), for: .touchUpInside)
+        button.setTitle("⛨", for: .normal)
+        button.addTarget(self, action: #selector(toggleWhitelistDomain), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var openWhitelistDomainsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("📝", for: .normal)
+        button.addTarget(self, action: #selector(openWhitelistDomainsListView), for: .touchUpInside)
         return button
     }()
     
     private lazy var addressBarStackView: UIStackView = {
         let view = UIStackView(
             arrangedSubviews: [
-                whiteListButton,
+                toggleWhitelistDomainButton,
+                openWhitelistDomainsButton,
                 addressBar
             ]
         )
@@ -134,11 +143,13 @@ class WebViewController: UIViewController {
     init(
         configuration: WKWebViewConfiguration,
         whitelistDomainsManager: WhitelistDomainsManager,
-        ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
+        ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>,
+        navigator: RootNavigator
     ) {
         self.configuration = configuration
         self.whitelistDomainsManager = whitelistDomainsManager
         self.ruleListStateUpdates = ruleListStateUpdates
+        self.navigator = navigator
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -176,6 +187,7 @@ class WebViewController: UIViewController {
     
     private func subscribeToRuleListStateUpdates() {
         ruleListStateUpdates
+        // Delay to ensure rules has been added in UserContentController
             .delay(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .sink { [weak self] stateUpdates in
                 guard let self else { return }
@@ -276,7 +288,7 @@ class WebViewController: UIViewController {
         webView.reload()
     }
     
-    @objc private func whiteListAction() {
+    @objc private func toggleWhitelistDomain() {
         // Implement the action for the WhiteList button
         guard let currentHost = webView.url?.host() else { return }
         Task {
@@ -288,6 +300,10 @@ class WebViewController: UIViewController {
                 await whitelistDomainsManager.add(currentHost)
             }
         }
+    }
+    
+    @objc private func openWhitelistDomainsListView() {
+        navigator.showWhiteListDomainsListView()
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
