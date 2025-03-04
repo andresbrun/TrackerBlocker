@@ -5,6 +5,8 @@ protocol WhitelistDomainsManager {
     func getAll() async -> [String]
     func add(_ domain: String) async
     func remove(_ domain: String) async
+    
+    var updates: CurrentValueSubject<[String], Never> { get }
 }
 
 actor DefaultWhitelistDomainsManager: WhitelistDomainsManager {
@@ -12,14 +14,14 @@ actor DefaultWhitelistDomainsManager: WhitelistDomainsManager {
     private let fileName = "whitelistDomains.txt"
     private var domains: Set<String> = [] {
         didSet {
-            whitelistDomainsUpdates.send(Array(domains).sorted())
+            updates.send(Array(domains).sorted())
         }
     }
 
-    private let whitelistDomainsUpdates: CurrentValueSubject<[String], Never>
+    let updates: CurrentValueSubject<[String], Never>
     
     init(whitelistDomainsUpdates: CurrentValueSubject<[String], Never>) {
-        self.whitelistDomainsUpdates = whitelistDomainsUpdates
+        self.updates = whitelistDomainsUpdates
         Task {
             await loadDomains()
         }

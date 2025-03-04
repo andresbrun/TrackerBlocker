@@ -4,11 +4,18 @@ import UIKit
 protocol RootNavigator: NSObject {
     func showWhiteListDomainsListView()
     func initializeNavigation(in window: UIWindow)
+
+    func presentAlert(title: String, description: String)
+    
+    func dismissLastPresentedViewController()
 }
 
 class AppRootNavigator: NSObject, RootNavigator {
     private let appCompositionRoot: AppCompositionRoot
     private var rootNavigationController: UINavigationController?
+    private var visibleViewController: UIViewController? {
+        rootNavigationController?.visibleViewController
+    }
     
     init(appCompositionRoot: AppCompositionRoot) {
         self.appCompositionRoot = appCompositionRoot
@@ -36,5 +43,22 @@ class AppRootNavigator: NSObject, RootNavigator {
         if NSClassFromString("XCTestCase") == nil {
             appCompositionRoot.wkContentRuleListManager.onInit()
         }
+    }
+    
+    func presentAlert(title: String, description: String) {
+        let alertController = UIAlertController(
+            title: title,
+            message: description,
+            preferredStyle: .alert
+        )
+        
+        let accept = UIAlertAction(title: "Accept", style: .default) { _ in }
+        alertController.addAction(accept)
+        
+        visibleViewController?.present(alertController, animated: true, completion: nil)
+    }
+    
+    func dismissLastPresentedViewController() {
+        visibleViewController?.dismiss(animated: true, completion: nil)
     }
 }

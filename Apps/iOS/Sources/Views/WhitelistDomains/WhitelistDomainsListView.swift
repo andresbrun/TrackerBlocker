@@ -1,77 +1,64 @@
 import SwiftUI
-import Combine
 
 struct WhitelistDomainsListView: View {
-    @StateObject var viewModel: WhitelistDomainsViewModel
+    @StateObject var viewModel: WhitelistDomainsListViewModel
     @State private var newDomain: String = ""
 
     var body: some View {
         NavigationView {
-            VStack {
-                HStack {
-                    TextField("Enter domain", text: $newDomain)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-
-                    Button(action: {
-                        guard !newDomain.isEmpty else { return }
-                        viewModel.addDomain(newDomain)
-                        newDomain = ""
-                    }) {
-                        Text("Add")
-                            .padding(.horizontal)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
+            List {
+                ForEach(viewModel.domains, id: \.self) { domain in
+                    createItemView(with: domain)
                 }
-                .padding()
-
-                List {
-                    ForEach(viewModel.domains, id: \.self) { domain in
-                        Text(domain)
+                .onDelete(perform: { indexSet in
+                    withAnimation {
+                        viewModel.removeDomain(at: indexSet)
                     }
-                    .onDelete(perform: viewModel.removeDomain)
-                }
+                })
+                createNewDomainItemView()
             }
             .navigationTitle("Whitelist Domains")
-            .onAppear {
-                Task {
-                    await viewModel.loadDomains()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        dismissView()
+                    }) {
+                        Image(systemName: "xmark")
+                    }
                 }
             }
         }
     }
-}
-
-class WhitelistDomainsViewModel: ObservableObject {
-    @Published var domains: [String] = []
-    private var manager: WhitelistDomainsManager
-    private var cancellables = Set<AnyCancellable>()
-
-    init(
-        manager: WhitelistDomainsManager
-    ) {
-        self.manager = manager
+    
+    private func createItemView(with domain: String) -> some View {
+        HStack {
+            Image(systemName: "globe")
+                .foregroundColor(.blue)
+            Text(domain)
+        }
     }
     
-    func loadDomains() async {
-        domains = await manager.getAll()
-    }
-
-    func addDomain(_ domain: String) {
-        Task {
-            await manager.add(domain)
+    private func createNewDomainItemView() -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "plus.circle")
+                .foregroundColor(.blue)
+            TextField("Enter new domain", text: $newDomain)
+                .keyboardType(.URL)
+                .autocapitalization(.none)
+                .onSubmit {
+                    withAnimation {
+                        addDomain()
+                    }
+                }
         }
     }
 
-    func removeDomain(at offsets: IndexSet) {
-        Task {
-            for index in offsets {
-                await manager.remove(domains[index])
-            }
-        }
+    private func addDomain() {
+        guard viewModel.addDomain(newDomain) else { return }
+        newDomain = ""
+    }
+
+    private func dismissView() {
+        viewModel.dismissView()
     }
 }
-
