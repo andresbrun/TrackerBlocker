@@ -14,6 +14,15 @@ class AppCompositionRoot {
         CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
     }()
     
+    private lazy var analyticsServices: AnalyticsServices = {
+        AnalyticsServices()
+    }()
+    
+    private lazy var featureStore: FeatureStore = {
+        let featureProvider = MockFeatureProvider()
+        return FeatureStore(provider: featureProvider)
+    }()
+    
     lazy var wkContentRuleListManager: WKContentRuleListManager = {
         WKContentRuleListManager(
             userDefaults: UserDefaults.standard,
@@ -44,7 +53,9 @@ class AppCompositionRoot {
             configuration: configuration,
             whitelistDomainsManager: whitelistDomainsManager,
             ruleListStateUpdates: ruleListStateUpdates,
-            navigator: rootNavigator
+            navigator: rootNavigator,
+            analyticsServices: analyticsServices,
+            featureStore: featureStore
         )
     }
     

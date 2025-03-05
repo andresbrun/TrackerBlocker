@@ -19,6 +19,8 @@ class WebViewController: UIViewController {
     private let whitelistDomainsManager: WhitelistDomainsManager
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     private unowned let navigator: RootNavigator
+    private let analyticsServices: AnalyticsServices
+    private let featureStore: FeatureStore
     
     // MARK: - State
     private var lastContentOffset: CGFloat = 0
@@ -144,12 +146,16 @@ class WebViewController: UIViewController {
         configuration: WKWebViewConfiguration,
         whitelistDomainsManager: WhitelistDomainsManager,
         ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>,
-        navigator: RootNavigator
+        navigator: RootNavigator,
+         analyticsServices: AnalyticsServices, 
+         featureStore: FeatureStore
     ) {
         self.configuration = configuration
         self.whitelistDomainsManager = whitelistDomainsManager
         self.ruleListStateUpdates = ruleListStateUpdates
         self.navigator = navigator
+        self.analyticsServices = analyticsServices
+        self.featureStore = featureStore
         super.init(nibName: nil, bundle: nil)
     }
     
