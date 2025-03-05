@@ -3,25 +3,35 @@ import UIKit
 extension UIView {
     /// Wraps the view inside a container view with specified padding for each side
     /// - Parameters:
-    ///   - top: Top padding
-    ///   - left: Left padding
-    ///   - bottom: Bottom padding
-    ///   - right: Right padding
+    ///   - horizontal: Top and Bottom padding
+    ///   - vertical: Left and Right padding
     /// - Returns: A new container view with this view inside it
-    func padding(top: CGFloat = 0, left: CGFloat = 0, bottom: CGFloat = 0, right: CGFloat = 0) -> UIView {
+    func padding(
+        horizontal: CGFloat = 0,
+        vertical: CGFloat = 0
+    ) -> UIView {
         let containerView = UIView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
-        self.translatesAutoresizingMaskIntoConstraints = false
+        translatesAutoresizingMaskIntoConstraints = false
         
         containerView.addSubview(self)
         
         NSLayoutConstraint.activate([
-            self.topAnchor.constraint(equalTo: containerView.topAnchor, constant: top),
-            self.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: left),
-            self.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -right),
-            self.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -bottom)
+            topAnchor.constraint(equalTo: containerView.topAnchor, constant: vertical),
+            leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: horizontal),
+            trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -horizontal),
+            bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -vertical)
         ])
         
         return containerView
     }
-} 
+    
+    func padding(
+        all: CGFloat = 0
+    ) -> UIView {
+        padding(
+            horizontal: all,
+            vertical: all
+        )
+    }
+}

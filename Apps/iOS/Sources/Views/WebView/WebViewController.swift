@@ -36,87 +36,132 @@ class WebViewController: UIViewController {
         return webView
     }()
     
-    private lazy var addressBar: UITextField = {
+    private lazy var addressBar: UIView = {
+        let view = UIStackView(arrangedSubviews: [
+            addressTextField,
+            reloadButton
+        ])
+        if viewModel.shouldShowWhitelistUIControls {
+            view.insertArrangedSubview(toggleWhitelistDomainButton, at: 0)
+        }
+        view.axis = .horizontal
+        view.spacing = stackViewSpacing
+        view.translatesAutoresizingMaskIntoConstraints = false
+        
+        let wrappedView = view.padding(all: 8)
+        wrappedView.backgroundColor = IOSAsset.Colors.secondaryBackgroundColor.color
+        wrappedView.heightAnchor.constraint(equalToConstant: addressBarHeight).isActive = true
+        wrappedView.layer.cornerRadius = 8
+        return wrappedView
+    }()
+    
+    private lazy var addressTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Enter URL"
-        textField.borderStyle = .roundedRect
+        textField.placeholder = "Enter Address"
+        textField.borderStyle = .none
         textField.delegate = self
         textField.autocapitalizationType = .none
         textField.autocorrectionType = .no
         textField.returnKeyType = .go
+        textField.clearButtonMode = .whileEditing
+        textField.textColor = IOSAsset.Colors.textColor.color
         return textField
     }()
     
     private lazy var backButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("←", for: .normal)
+        button.setImage(
+            IOSAsset.Assets.icToolbarBack.image,
+            for: .normal
+        )
+        button.tintColor = IOSAsset.Colors.textColor.color
         button.addTarget(self, action: #selector(goBack), for: .touchUpInside)
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
         return button
     }()
     
     private lazy var forwardButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("→", for: .normal)
+        button.setImage(
+            IOSAsset.Assets.icToolbarForward.image,
+            for: .normal
+        )
+        button.tintColor = IOSAsset.Colors.textColor.color
         button.addTarget(self, action: #selector(goForward), for: .touchUpInside)
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
         return button
     }()
     
     private lazy var reloadButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("⟳", for: .normal)
+        button.setImage(
+            IOSAsset.Assets.icReload24.image,
+            for: .normal
+        )
+        button.tintColor = IOSAsset.Colors.textColor.color
         button.addTarget(self, action: #selector(reloadPage), for: .touchUpInside)
         return button
     }()
     
-    private lazy var toolbar: UIStackView = {
-        let view = UIStackView(arrangedSubviews: [backButton, forwardButton, reloadButton])
+    private lazy var toolbar: UIView = {
+        let view = UIStackView(arrangedSubviews: [
+            UIView(),
+            backButton,
+            forwardButton
+        ])
+        if viewModel.shouldShowWhitelistUIControls {
+            view.insertArrangedSubview(openWhitelistDomainsButton, at: 0)
+        }
         view.axis = .horizontal
-        view.distribution = .equalSpacing
+        view.spacing = 44
         view.heightAnchor.constraint(equalToConstant: toolbarHeight).isActive = true
         view.translatesAutoresizingMaskIntoConstraints = false
-        return view
+        return view.padding(horizontal: padding)
     }()
     
     private lazy var toggleWhitelistDomainButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("⛨", for: .normal)
+        button.setImage(
+            IOSAsset.Assets.icProtectionEnabled.image,
+            for: .normal
+        )
+        button.tintColor = IOSAsset.Colors.textColor.color
         button.addTarget(self, action: #selector(toggleWhitelistDomain), for: .touchUpInside)
         return button
     }()
     
     private lazy var openWhitelistDomainsButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("📝", for: .normal)
+        button.setImage(
+            IOSAsset.Assets.icBookmarks.image,
+            for: .normal
+        )
+        button.tintColor = IOSAsset.Colors.textColor.color
         button.addTarget(self, action: #selector(openWhitelistDomainsListView), for: .touchUpInside)
         return button
-    }()
-    
-    private lazy var addressBarStackView: UIStackView = {
-        let view = UIStackView(
-            arrangedSubviews: [
-                toggleWhitelistDomainButton,
-                openWhitelistDomainsButton,
-                addressBar
-            ]
-        )
-        view.axis = .horizontal
-        view.spacing = stackViewSpacing
-        view.heightAnchor.constraint(equalToConstant: addressBarHeight).isActive = true
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
     }()
     
     private lazy var addressBarAndToolbarView: UIView = {
         let view = UIStackView(
             arrangedSubviews: [
-                addressBarStackView,
+                addressBar,
                 toolbar
             ]
         )
         view.axis = .vertical
         view.spacing = padding
         view.translatesAutoresizingMaskIntoConstraints = false
-        return view.padding(left: padding, right: padding)
+        let wrappedView = view.padding(horizontal: padding)
+        wrappedView.backgroundColor = IOSAsset.Colors.primaryBackgroundColor.color
+        return wrappedView
+    }()
+    
+    private lazy var progressBar: UIProgressView = {
+        let progressView = UIProgressView(progressViewStyle: .default)
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        return progressView
     }()
     
     private lazy var mainStackView: UIStackView = {
@@ -131,12 +176,6 @@ class WebViewController: UIViewController {
         view.spacing = stackViewSpacing
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
-    }()
-    
-    private lazy var progressBar: UIProgressView = {
-        let progressView = UIProgressView(progressViewStyle: .default)
-        progressView.translatesAutoresizingMaskIntoConstraints = false
-        return progressView
     }()
     
     init(
@@ -167,7 +206,7 @@ class WebViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = IOSColors.Color.systemGray
+        view.backgroundColor = IOSAsset.Colors.primaryBackgroundColor.color
         view.addSubview(mainStackView)
         
         mainStackViewBottomConstraint = mainStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -183,7 +222,7 @@ class WebViewController: UIViewController {
     private func bindViewModel() {
         viewModel.$currentURL
             .sink { [weak self] url in
-                self?.addressBar.text = url?.absoluteString
+                self?.addressTextField.text = url?.absoluteString
             }
             .store(in: &cancellables)
         
@@ -248,7 +287,7 @@ class WebViewController: UIViewController {
     }
     
     @objc private func keyboardWillShow(_ notification: Notification) {
-        guard addressBar.isFirstResponder else { return }
+        guard addressTextField.isFirstResponder else { return }
         
         if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
             let offset = view.safeAreaInsets.bottom - keyboardFrame.height

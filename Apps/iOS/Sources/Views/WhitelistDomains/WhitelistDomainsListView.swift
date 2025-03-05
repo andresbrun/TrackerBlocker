@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct WhitelistDomainsListView: View {
+    // MARK: - Constants
+    private let InternalPadding = 8.0
+    
+    // MARK: - State
     @StateObject var viewModel: WhitelistDomainsListViewModel
     @State private var newDomain: String = ""
 
@@ -24,6 +28,7 @@ struct WhitelistDomainsListView: View {
                         dismissView()
                     }) {
                         Image(systemName: "xmark")
+                            .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
                     }
                 }
             }
@@ -31,17 +36,16 @@ struct WhitelistDomainsListView: View {
     }
     
     private func createItemView(with domain: String) -> some View {
-        HStack {
+        HStack(spacing: InternalPadding) {
             Image(systemName: "globe")
-                .foregroundColor(.blue)
             Text(domain)
         }
+        .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
     }
     
     private func createNewDomainItemView() -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: InternalPadding) {
             Image(systemName: "plus.circle")
-                .foregroundColor(.blue)
             TextField("Enter new domain", text: $newDomain)
                 .keyboardType(.URL)
                 .autocapitalization(.none)
@@ -51,6 +55,7 @@ struct WhitelistDomainsListView: View {
                     }
                 }
         }
+        .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
     }
 
     private func addDomain() {
