@@ -15,17 +15,14 @@ class WebViewController: UIViewController {
     private let minThreasholdToHideBottomView: CGFloat = 100.0
     
     // MARK: - Dependencies
+    private let viewModel: WebViewModel
     private let configuration: WKWebViewConfiguration
-    private let whitelistDomainsManager: WhitelistDomainsManager
-    private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
-    private unowned let navigator: RootNavigator
-    private let analyticsServices: AnalyticsServices
-    private let featureStore: FeatureStore
     
     // MARK: - State
     private var lastContentOffset: CGFloat = 0
     private var isKeyboardVisible: Bool = false
     private var mainStackViewBottomConstraint: NSLayoutConstraint?
+    private var observer: NSKeyValueObservation?
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - UI components
@@ -34,7 +31,7 @@ class WebViewController: UIViewController {
             frame: view.bounds,
             configuration: configuration
         )
-        webView.navigationDelegate = self
+        webView.navigationDelegate = viewModel
         webView.scrollView.delegate = self
         return webView
     }()
@@ -144,18 +141,10 @@ class WebViewController: UIViewController {
     
     init(
         configuration: WKWebViewConfiguration,
-        whitelistDomainsManager: WhitelistDomainsManager,
-        ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>,
-        navigator: RootNavigator,
-         analyticsServices: AnalyticsServices, 
-         featureStore: FeatureStore
+        viewModel: WebViewModel
     ) {
         self.configuration = configuration
-        self.whitelistDomainsManager = whitelistDomainsManager
-        self.ruleListStateUpdates = ruleListStateUpdates
-        self.navigator = navigator
-        self.analyticsServices = analyticsServices
-        self.featureStore = featureStore
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -171,14 +160,14 @@ class WebViewController: UIViewController {
         super.viewDidLoad()
         
         setupUI()
-        loadDefaultPage()
+        bindViewModel()
         setupKeyboardObservers()
         setupEstimatedProgressObserver()
-        subscribeToRuleListStateUpdates()
+        viewModel.loadDefaultPage()
     }
     
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = IOSColors.Color.systemGray
         view.addSubview(mainStackView)
         
         mainStackViewBottomConstraint = mainStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -191,26 +180,42 @@ class WebViewController: UIViewController {
         ])
     }
     
-    private func subscribeToRuleListStateUpdates() {
-        ruleListStateUpdates
-        // Delay to ensure rules has been added in UserContentController
-            .delay(for: .milliseconds(100), scheduler: DispatchQueue.main)
-            .sink { [weak self] stateUpdates in
-                guard let self else { return }
-                
-                switch stateUpdates?.reason {
-                case .whitelistUpdated(let added, let removed):
-                    guard let hostLoaded = webView.url?.host() else {
-                        return
-                    }
-                    if (added + removed).contains(hostLoaded) {
-                        reloadCurrentPage()
-                    }
-                    
-                default:
-                    break
+    private func bindViewModel() {
+        viewModel.$currentURL
+            .sink { [weak self] url in
+                self?.addressBar.text = url?.absoluteString
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$canGoBack
+            .assign(to: \.isEnabled, on: backButton)
+            .store(in: &cancellables)
+        
+        viewModel.$canGoForward
+            .assign(to: \.isEnabled, on: forwardButton)
+            .store(in: &cancellables)
+        
+        viewModel.$estimatedProgress
+            .sink { [weak self] progress in
+                self?.progressBar.progress = Float(progress)
+                self?.progressBar.isHidden = progress == 1
+            }
+            .store(in: &cancellables)
+        
+        viewModel.callbacksPublisher
+            .sink { [unowned webView] callback in
+                switch callback {
+                case .load(let url):
+                    webView.load(URLRequest(url: url))
+                case .goBack:
+                    guard webView.canGoBack else { return }
+                    webView.goBack()
+                case .goForward:
+                    guard webView.canGoForward else { return }
+                    webView.goForward()
                 }
-            }.store(in: &cancellables)
+            }
+            .store(in: &cancellables)
     }
     
     private func setupKeyboardObservers() {
@@ -229,17 +234,17 @@ class WebViewController: UIViewController {
     }
     
     private func setupEstimatedProgressObserver() {
-        webView.addObserver(
-            self,
-            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-            options: .new,
-            context: nil
-        )
+        observer = webView.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, change in
+            DispatchQueue.main.async {
+                self?.viewModel.estimatedProgress = webView.estimatedProgress
+            }
+        }
     }
     
     private func removeObservers() {
         NotificationCenter.default.removeObserver(self)
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
+        observer?.invalidate()
+        observer = nil
     }
     
     @objc private func keyboardWillShow(_ notification: Notification) {
@@ -265,85 +270,35 @@ class WebViewController: UIViewController {
         }
     }
     
-    private func loadDefaultPage() {
-        let url = URL(string: "https://www.duckduckgo.com")!
-        webView.load(URLRequest(url: url))
-        addressBar.text = url.absoluteString
-    }
-    
-    private func reloadCurrentPage() {
-        guard let currentURL = webView.url else { return }
-        webView.load(URLRequest(url: currentURL))
-    }
-    
     // MARK: - Actions
     
     @objc private func goBack() {
-        if webView.canGoBack {
-            webView.goBack()
-        }
+        viewModel.goBack()
     }
     
     @objc private func goForward() {
-        if webView.canGoForward {
-            webView.goForward()
-        }
+        viewModel.goForward()
     }
     
     @objc private func reloadPage() {
-        webView.reload()
+        viewModel.reloadCurrentPage()
     }
     
     @objc private func toggleWhitelistDomain() {
-        // Implement the action for the WhiteList button
-        guard let currentHost = webView.url?.host() else { return }
-        Task {
-            if await whitelistDomainsManager.getAll().contains(currentHost) {
-                Logger.default.info("Removing \(currentHost) from whitelist")
-                await whitelistDomainsManager.remove(currentHost)
-            } else {
-                Logger.default.info("Adding \(currentHost) in whitelist")
-                await whitelistDomainsManager.add(currentHost)
-            }
-        }
+        viewModel.toggleWhitelistDomain(for: webView.url?.host())
     }
     
     @objc private func openWhitelistDomainsListView() {
-        navigator.showWhiteListDomainsListView()
-    }
-    
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == #keyPath(WKWebView.estimatedProgress) {
-            progressBar.progress = Float(webView.estimatedProgress)
-            progressBar.isHidden = webView.estimatedProgress == 1
-        }
+        viewModel.showWhiteListDomainsListView()
     }
 }
 
 extension WebViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        guard let text = textField.text, let url = URL(string: text.hasPrefix("http") ? text : "https://\(text)") else {
-            return false
+        if viewModel.tryToLoad(absoluteString: textField.text) {
+            textField.resignFirstResponder()
         }
-        webView.load(URLRequest(url: url))
-        textField.resignFirstResponder()
         return true
-    }
-}
-
-extension WebViewController: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
-        updateNavigationUI()
-    }
-    
-    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation?) {
-        updateNavigationUI()
-    }
-    
-    private func updateNavigationUI() {
-        addressBar.text = webView.url?.absoluteString
-        backButton.isEnabled = webView.canGoBack
-        forwardButton.isEnabled = webView.canGoForward
     }
 }
 

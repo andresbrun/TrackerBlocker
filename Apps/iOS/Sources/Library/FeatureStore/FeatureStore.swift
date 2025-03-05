@@ -8,8 +8,8 @@ protocol FeatureProvider {
     func isFeatureEnabled(_ feature: FeatureFlag) -> Bool
 }
 
-// Since we don't have a real feature provider, we'll use a mock
-class MockFeatureProvider: FeatureProvider {
+// Since we don't have a real feature provider, we'll use a Fake
+class FakeFeatureProvider: FeatureProvider {
     private var featureFlags: [FeatureFlag: Bool] = [
         .enhancedTrackingProtection: true
     ]

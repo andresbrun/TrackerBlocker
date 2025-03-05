@@ -19,8 +19,9 @@ class AppCompositionRoot {
     }()
     
     private lazy var featureStore: FeatureStore = {
-        let featureProvider = MockFeatureProvider()
-        return FeatureStore(provider: featureProvider)
+        FeatureStore(
+            provider: FakeFeatureProvider()
+        )
     }()
     
     lazy var wkContentRuleListManager: WKContentRuleListManager = {
@@ -49,13 +50,18 @@ class AppCompositionRoot {
     func createWebViewController() -> WebViewController {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = createUserContentController()
-        return WebViewController(
-            configuration: configuration,
+        
+        let webViewModel = WebViewModel(
             whitelistDomainsManager: whitelistDomainsManager,
             ruleListStateUpdates: ruleListStateUpdates,
             navigator: rootNavigator,
-            analyticsServices: analyticsServices,
-            featureStore: featureStore
+            featureStore: featureStore,
+            analyticsServices: analyticsServices
+        )
+        
+        return WebViewController(
+            configuration: configuration,
+            viewModel: webViewModel
         )
     }
     
