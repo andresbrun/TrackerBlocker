@@ -15,7 +15,9 @@ class WebViewModel: NSObject {
     @Published var canGoBack: Bool = false
     @Published var canGoForward: Bool = false
     @Published var estimatedProgress: Double = 0.0
+    @Published var toggleWhitelistDomainActive: Bool = false
     
+    private var navigationStartTime: Date?
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: VC communication
@@ -44,15 +46,17 @@ class WebViewModel: NSObject {
         subscribeToRuleListStateUpdates()
     }
     
+    // MARK: - Actions
     func loadDefaultPage() {
         let url = URL(string: "https://www.duckduckgo.com")!
         callbacksPublisher.send(.load(url))
     }
     
     func tryToLoad(absoluteString: String?) -> Bool {
+        guard let absoluteString else { return false }
+        analyticsServices.trackEvent(.webViewTryToLoad(absoluteString))
         // TODO: Address Sanitizer
         guard
-            let absoluteString = absoluteString,
             let url = URL(string: absoluteString.hasPrefix("http") ? absoluteString : "https://\(absoluteString)")
         else {
             return false
@@ -63,15 +67,18 @@ class WebViewModel: NSObject {
     }
     
     func reloadCurrentPage() {
-        guard let currentURL = currentURL else { return }
+        analyticsServices.trackEvent(.webViewReloadTapped)
+        guard let currentURL else { return }
         callbacksPublisher.send(.load(currentURL))
     }
     
     func goBack() {
+        analyticsServices.trackEvent(.webViewGoBackTapped)
         callbacksPublisher.send(.goBack)
     }
     
     func goForward() {
+        analyticsServices.trackEvent(.webViewGoForwardTapped)
         callbacksPublisher.send(.goForward)
     }
     
@@ -90,9 +97,16 @@ class WebViewModel: NSObject {
     }
     
     func showWhiteListDomainsListView() {
+        analyticsServices.trackEvent(.webViewWhitelistDomainsViewTapped)
         navigator.showWhiteListDomainsListView()
     }
     
+    // MARK: - Accessors
+    var shouldShowWhitelistUIControls: Bool {
+        featureStore.isFeatureEnabled(.enhancedTrackingProtection)
+    }
+    
+    // MARK: - Private
     private func subscribeToRuleListStateUpdates() {
         ruleListStateUpdates
             .delay(for: .milliseconds(100), scheduler: DispatchQueue.main)
@@ -119,17 +133,27 @@ class WebViewModel: NSObject {
 }
 
 extension WebViewModel: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        navigationStartTime = Date()
+        updateNavigationState(webView)
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
+        if let url = webView.url, let navigationStartTime {
+            let loadTime = Int(Date().timeIntervalSince(navigationStartTime) * 1000)
+            Logger.default.info("WebView did finish navigation in \(loadTime)ms to \(url)")
+            analyticsServices.trackEvent(.webViewLoaded(url, loadTime))
+        }
         updateNavigationState(webView)
     }
-    
-    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation?) {
-        updateNavigationState(webView)
-    }
-    
+
     private func updateNavigationState(_ webView: WKWebView) {
         currentURL = webView.url
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
+        if shouldShowWhitelistUIControls {
+            toggleWhitelistDomainActive = whitelistDomainsManager.contains(webView.url)
+        }
     }
 }
+
