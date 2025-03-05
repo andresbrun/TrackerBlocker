@@ -77,14 +77,15 @@ class WebViewModel: NSObject {
     
     func toggleWhitelistDomain(for host: String?) {
         guard let host else { return }
-        Task {
-            if await whitelistDomainsManager.getAll().contains(host) {
-                Logger.default.info("Removing \(host) from whitelist")
-                await whitelistDomainsManager.remove(host)
-            } else {
-                Logger.default.info("Adding \(host) in whitelist")
-                await whitelistDomainsManager.add(host)
-            }
+        
+        if whitelistDomainsManager.getAll().contains(host) {
+            Logger.default.info("Removing \(host) from whitelist")
+            analyticsServices.trackEvent(.webViewWhitelistDomainToggle(false, host))
+            whitelistDomainsManager.remove(host)
+        } else {
+            Logger.default.info("Adding \(host) in whitelist")
+            analyticsServices.trackEvent(.webViewWhitelistDomainToggle(true, host))
+            whitelistDomainsManager.add(host)
         }
     }
     

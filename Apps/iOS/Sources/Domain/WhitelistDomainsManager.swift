@@ -2,19 +2,27 @@ import Foundation
 import Combine
 
 protocol WhitelistDomainsManager {
-    func getAll() async -> [String]
-    func add(_ domain: String) async
-    func remove(_ domain: String) async
+    func getAll() -> [String]
+    func add(_ domain: String)
+    func remove(_ domain: String)
     
     var updates: CurrentValueSubject<[String], Never> { get }
 }
 
-actor DefaultWhitelistDomainsManager: WhitelistDomainsManager {
+extension WhitelistDomainsManager {
+    func contains(_ url: URL?) -> Bool {
+        guard let host = url?.host() else { return false }
+        return getAll().contains(host)
+    }
+}
+
+class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
     private let fileManager = FileManager.default
     private let fileName = "whitelistDomains.txt"
     private var domains: Set<String> = [] {
         didSet {
             updates.send(Array(domains).sorted())
+            saveDomains()
         }
     }
 
@@ -22,9 +30,7 @@ actor DefaultWhitelistDomainsManager: WhitelistDomainsManager {
     
     init(whitelistDomainsUpdates: CurrentValueSubject<[String], Never>) {
         self.updates = whitelistDomainsUpdates
-        Task {
-            await loadDomains()
-        }
+        loadDomains()
     }
 
     private func getFilePath() -> URL? {
@@ -34,7 +40,7 @@ actor DefaultWhitelistDomainsManager: WhitelistDomainsManager {
         return documentsDirectory.appendingPathComponent(fileName)
     }
 
-    private func loadDomains() async {
+    private func loadDomains() {
         guard let filePath = getFilePath() else { return }
         if let data = try? Data(contentsOf: filePath),
            let savedDomains = String(data: data, encoding: .utf8) {
@@ -42,24 +48,22 @@ actor DefaultWhitelistDomainsManager: WhitelistDomainsManager {
         }
     }
 
-    private func saveDomains() async {
+    private func saveDomains() {
         guard let filePath = getFilePath() else { return }
         let domainsString = domains.joined(separator: "\n")
         try? domainsString.write(to: filePath, atomically: true, encoding: .utf8)
     }
 
-    func getAll() async -> [String] {
-        return Array(domains)
+    func getAll() -> [String] {
+        Array(domains)
     }
 
-    func add(_ domain: String) async {
+    func add(_ domain: String) {
         guard !domain.isEmpty else { return }
         domains.insert(domain)
-        await saveDomains()
     }
 
-    func remove(_ domain: String) async {
+    func remove(_ domain: String) {
         domains.remove(domain)
-        await saveDomains()
     }
 }

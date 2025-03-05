@@ -2,14 +2,13 @@ import SwiftUI
 import Combine
 
 class WhitelistDomainsListViewModel: ObservableObject {
-    @Published var domains: [String] = []
+    // MARK: - Dependencies
     private var manager: WhitelistDomainsManager
     private let rootNavigator: RootNavigator
-    private var cancellables = Set<AnyCancellable>()
     
-    var navigationBarTitle: String {
-        IOSStrings.Whitelistdomainsview.NavigationBar.title
-    }
+    // MARK: - State
+    private var cancellables = Set<AnyCancellable>()
+    @Published var domains: [String] = []
     
     init(
         manager: WhitelistDomainsManager,
@@ -20,15 +19,11 @@ class WhitelistDomainsListViewModel: ObservableObject {
         subscribeToDomainsListUpdates()
     }
     
-    private func subscribeToDomainsListUpdates() {
-        manager.updates
-            .receive(on: DispatchQueue.main)
-            .sink { domains in
-                self.domains = domains
-            }
-            .store(in: &cancellables)
+    // MARK: - Public
+    var navigationBarTitle: String {
+        IOSStrings.Whitelistdomainsview.NavigationBar.title
     }
-
+    
     func addDomain(_ domain: String) -> Bool {
         guard let host = normalizedDomain(domain) else {
             rootNavigator.presentAlert(
@@ -45,18 +40,14 @@ class WhitelistDomainsListViewModel: ObservableObject {
             )
             return false
         } else {
-            Task {
-                await manager.add(host)
-            }
+            manager.add(host)
             return true
         }
     }
 
     func removeDomain(at offsets: IndexSet) {
-        Task {
-            for index in offsets {
-                await manager.remove(domains[index])
-            }
+        for index in offsets {
+            manager.remove(domains[index])
         }
     }
     
@@ -64,6 +55,17 @@ class WhitelistDomainsListViewModel: ObservableObject {
         rootNavigator.dismissLastPresentedViewController()
     }
     
+    
+    // MARK: - Private
+    private func subscribeToDomainsListUpdates() {
+        manager.updates
+            .receive(on: DispatchQueue.main)
+            .sink { domains in
+                self.domains = domains
+            }
+            .store(in: &cancellables)
+    }
+
     private func normalizedDomain(_ domain: String) -> String? {
         let urlString = domain.hasPrefix("http://") || domain.hasPrefix("https://") ? domain : "https://\(domain)"
         guard let urlComponents = URLComponents(string: urlString) else { return nil }
