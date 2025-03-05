@@ -1,1 +1,7 @@
-"test" = "Test";
+"whitelistdomainsview.alert.invalid_domain.title" = "Dominio Inválido";
+"whitelistdomainsview.alert.invalid_domain.description" = "El dominio '%1$@' no es válido";
+
+"whitelistdomainsview.alert.duplicated_domain.title" = "Dominio Duplicado";
+"whitelistdomainsview.alert.duplicated_domain.description" = "El dominio '%1$@' ya está en la lista";
+
+"whitelistdomainsview.navigation_bar.title" = "Dominios Permitidos";

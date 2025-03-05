@@ -17,7 +17,7 @@ struct WhitelistDomainsListView: View {
                 })
                 createNewDomainItemView()
             }
-            .navigationTitle("Whitelist Domains")
+            .navigationTitle(viewModel.navigationBarTitle)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {

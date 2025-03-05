@@ -7,6 +7,10 @@ class WhitelistDomainsListViewModel: ObservableObject {
     private let rootNavigator: RootNavigator
     private var cancellables = Set<AnyCancellable>()
     
+    var navigationBarTitle: String {
+        IOSStrings.Whitelistdomainsview.NavigationBar.title
+    }
+    
     init(
         manager: WhitelistDomainsManager,
         rootNavigator: RootNavigator
@@ -28,16 +32,16 @@ class WhitelistDomainsListViewModel: ObservableObject {
     func addDomain(_ domain: String) -> Bool {
         guard let host = normalizedDomain(domain) else {
             rootNavigator.presentAlert(
-                title: "Invalid Domain",
-                description: "The domain '\(domain)' is not valid."
+                title: IOSStrings.Whitelistdomainsview.Alert.InvalidDomain.title,
+                description: IOSStrings.Whitelistdomainsview.Alert.InvalidDomain.description(domain)
             )
             return false
         }
         
         if domains.contains(host) {
             rootNavigator.presentAlert(
-                title: "Duplicated Domain",
-                description: "The domain '\(host)' is already in the list."
+                title: IOSStrings.Whitelistdomainsview.Alert.DuplicatedDomain.title,
+                description: IOSStrings.Whitelistdomainsview.Alert.DuplicatedDomain.description(domain)
             )
             return false
         } else {
