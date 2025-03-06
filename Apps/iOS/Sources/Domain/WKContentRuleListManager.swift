@@ -4,6 +4,16 @@ import TrackerRadarKit
 import os
 import Foundation
 
+struct Identifier: Codable {
+    let etag: String?
+    let domains: [String]
+    
+    var value: String {
+        let sortedDomainsHash = domains.sorted().joined().data(using: .utf8)?.base64EncodedString() ?? ""
+        return "\(etag ?? "local_file")_\(sortedDomainsHash)"
+    }
+}
+
 class WKContentRuleListManager {
     struct Constants {
         static let IdentifierKey = "LastRuleListIdentifier"
@@ -21,6 +31,21 @@ class WKContentRuleListManager {
     private var compilationTask: Task<Void, Never>?
     
     private let logger = Logger.default
+    
+    private var lastIdentifier: Identifier? {
+        get {
+            guard let identifierData = userDefaults.data(forKey: Constants.IdentifierKey) else { return nil }
+            return try? JSONDecoder().decode(Identifier.self, from: identifierData)
+        }
+        set {
+            guard let newValue else {
+                userDefaults.setValue(nil, forKey: Constants.IdentifierKey)
+                return
+            }
+            let identifierData = try? JSONEncoder().encode(newValue)
+            userDefaults.setValue(identifierData, forKey: Constants.IdentifierKey)
+        }
+    }
     
     init(
         userDefaults: UserDefaultsProtocol,
@@ -43,32 +68,37 @@ class WKContentRuleListManager {
         logger.info("Initializing WKContentRuleListManager")
         subscribeToWhitelistDomainsUpdates()
         
-        // Load the current rule list
         Task {
-            if let lastIdentifier = userDefaults.string(forKey: Constants.IdentifierKey) {
-                logger.info("Retrieving cached rule list with identifier: \(lastIdentifier)")
-                await retrieveCachedRuleList(identifier: lastIdentifier)
-            } else {
-                logger.warning("No cached rule list found, loading cached TDS")
-                let tdsData = await loadCachedTDS()
-                await scheduleCompilationIfNeeded(
-                    with: tdsData,
-                    whitelistDomains: whitelistDomainsUpdates.value,
-                    reason: .initialLoad
-                )
-            }
+            await loadCurrentRuleListOrCompileWithCachedTDS()
         }
         
-        // Try to download the new file if exists
         Task {
-            logger.info("Attempting to download new TDS file")
-            guard let tdsData = await downloadTDSFileIfNeeded() else { return }
+            await tryToDownloadNewTDSIfExists()
+        }
+    }
+    
+    private func loadCurrentRuleListOrCompileWithCachedTDS() async {
+        if let identifier = lastIdentifier {
+            await retrieveCachedRuleList(identifier: identifier.value)
+        } else {
+            logger.warning("No cached rule list found, loading cached TDS data")
+            let tdsData = await loadCachedTDS()
             await scheduleCompilationIfNeeded(
                 with: tdsData,
                 whitelistDomains: whitelistDomainsUpdates.value,
-                reason: .newTDS
+                reason: .initialLoad
             )
         }
+    }
+    
+    private func tryToDownloadNewTDSIfExists() async {
+        logger.info("Attempting to download new TDS file")
+        guard let tdsData = await downloadTDSFileIfNeeded() else { return }
+        await scheduleCompilationIfNeeded(
+            with: tdsData,
+            whitelistDomains: whitelistDomainsUpdates.value,
+            reason: .newTDS
+        )
     }
     
     private func subscribeToWhitelistDomainsUpdates() {
@@ -181,12 +211,12 @@ class WKContentRuleListManager {
             
             let startTime = Date()
             let etag = self.userDefaults.string(forKey: Constants.EtagKey)
-            let lastIdentifier = self.userDefaults.string(forKey: Constants.IdentifierKey)
             
-            let identifier = self.generateRuleListIdentifier(etag: etag, domains: whitelistDomains)
-            logger.info("Compilation Task(\(uuid)): Generating rule list identifier \(identifier). Last identifier: \(String(describing: lastIdentifier))")
+            let identifier = Identifier(etag: etag, domains: whitelistDomains)
+            logger.info("Compilation Task(\(uuid)): Generating rule list identifier \(identifier.value). Last identifier: \(String(describing: lastIdentifier?.value))")
             
-            guard lastIdentifier != identifier else {
+            if let lastIdentifier = lastIdentifier,
+               lastIdentifier.value == identifier.value {
                 logger.info("Compilation Task(\(uuid)): Identifier hasn't changed, skipping compilation")
                 return
             }
@@ -223,7 +253,7 @@ class WKContentRuleListManager {
                 }
                 logger.info("Compilation Task(\(uuid)): Compiling content rule list")
                 let ruleList = try await self.ruleListStore.compileContentRuleList(
-                    forIdentifier: identifier,
+                    forIdentifier: identifier.value,
                     encodedContentRuleList: jsonRules
                 )
                 
@@ -235,7 +265,8 @@ class WKContentRuleListManager {
                 
                 logger.info("Compilation Task(\(uuid)): Clearing previous rule list")
                 await self.clearPreviousRuleList()
-                self.userDefaults.setValue(identifier, forKey: Constants.IdentifierKey)
+                
+                self.lastIdentifier = identifier
                 
                 logger.info("Compilation Task(\(uuid)): Publishing new rule list")
                 await self.publish(ruleList: ruleList, reason: reason)
@@ -250,8 +281,8 @@ class WKContentRuleListManager {
     }
     
     private func clearPreviousRuleList() async {
-        guard let lastIdentifier = userDefaults.string(forKey: Constants.IdentifierKey) else { return }
-        try? await ruleListStore.removeContentRuleList(forIdentifier: lastIdentifier)
+        guard let identifier = lastIdentifier else { return }
+        try? await ruleListStore.removeContentRuleList(forIdentifier: identifier.value)
     }
     
     private func trackError() {
@@ -261,9 +292,7 @@ class WKContentRuleListManager {
     }
     
     private func generateRuleListIdentifier(etag: String?, domains: [String]) -> String {
-        // TODO: Create Identifier, sort domains
-        // Implement your logic to generate a unique identifier based on the etag and domains
-        // This is a placeholder and should be replaced with your actual implementation
-        return "\(etag ?? "local_file")_\(domains.sorted().joined(separator: "_"))"
+        let identifier = Identifier(etag: etag, domains: domains)
+        return identifier.value
     }
 }
