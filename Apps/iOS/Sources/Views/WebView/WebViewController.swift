@@ -99,6 +99,7 @@ class WebViewController: UIViewController {
         textField.autocapitalizationType = .none
         textField.autocorrectionType = .no
         textField.returnKeyType = .go
+        textField.keyboardType = .URL
         textField.clearButtonMode = .whileEditing
         textField.textColor = IOSAsset.Colors.textColor.color
         textField.accessibilityLabel = IOSStrings.Webviewcontroller.AddressTextfield.accessibilityLabel

@@ -60,9 +60,10 @@ class WebViewModel: NSObject {
     func tryToLoad(absoluteString: String?) -> Bool {
         guard let absoluteString else { return false }
         analyticsServices.trackEvent(.webViewTryToLoad(absoluteString))
-        // TODO: Address Sanitizer
-        if let url = URL(string: absoluteString.hasPrefix("http") ? absoluteString : "https://\(absoluteString)") {
+
+        if let url = absoluteString.extractURLs().first {
             callbacksPublisher.send(.load(url))
+            return true
         } else if !absoluteString.isEmpty {
             let searchURL = createSearchURL(for: absoluteString)
             callbacksPublisher.send(.load(searchURL))
@@ -169,4 +170,3 @@ extension WebViewModel: WKNavigationDelegate {
         }
     }
 }
-

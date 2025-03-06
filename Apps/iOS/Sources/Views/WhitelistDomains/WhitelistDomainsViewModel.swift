@@ -67,8 +67,6 @@ class WhitelistDomainsListViewModel: ObservableObject {
     }
 
     private func normalizedDomain(_ domain: String) -> String? {
-        let urlString = domain.hasPrefix("http://") || domain.hasPrefix("https://") ? domain : "https://\(domain)"
-        guard let urlComponents = URLComponents(string: urlString) else { return nil }
-        return urlComponents.host
+        domain.extractURLs().first?.host()
     }
 }
