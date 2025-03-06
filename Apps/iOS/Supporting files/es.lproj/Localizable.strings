@@ -6,7 +6,7 @@
 
 "whitelistdomainsview.navigation_bar.title" = "Dominios Permitidos";
 
-"webviewcontroller.address_textfield.placeholder" = "Introducir dirección";
+"webviewcontroller.address_textfield.placeholder" = "Busca o introduce una dirección";
 "webviewcontroller.address_textfield.accessibility_label" = "Campo de dirección";
 "webviewcontroller.address_textfield.accessibility_hint" = "Introduzca la dirección web que desea visitar";
 

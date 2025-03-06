@@ -6,7 +6,7 @@
 
 "whitelistdomainsview.navigation_bar.title" = "Whitelist Domains";
 
-"webviewcontroller.address_textfield.placeholder" = "Enter Address";
+"webviewcontroller.address_textfield.placeholder" = "Search or enter address";
 "webviewcontroller.address_textfield.accessibility_label" = "Address Field";
 "webviewcontroller.address_textfield.accessibility_hint" = "Enter the web address you want to visit";
 

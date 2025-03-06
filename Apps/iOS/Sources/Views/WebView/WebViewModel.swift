@@ -48,7 +48,7 @@ class WebViewModel: NSObject {
     
     // MARK: - Actions
     func loadDefaultPage() {
-        let url = URL(string: "https://www.duckduckgo.com")!
+        let url = URL(string: Constants.URL.DefaultSearchEngine)!
         callbacksPublisher.send(.load(url))
     }
     
@@ -56,14 +56,15 @@ class WebViewModel: NSObject {
         guard let absoluteString else { return false }
         analyticsServices.trackEvent(.webViewTryToLoad(absoluteString))
         // TODO: Address Sanitizer
-        guard
-            let url = URL(string: absoluteString.hasPrefix("http") ? absoluteString : "https://\(absoluteString)")
-        else {
-            return false
+        if let url = URL(string: absoluteString.hasPrefix("http") ? absoluteString : "https://\(absoluteString)") {
+            callbacksPublisher.send(.load(url))
+        } else if !absoluteString.isEmpty {
+            let searchURL = createSearchURL(for: absoluteString)
+            callbacksPublisher.send(.load(searchURL))
+            return true
         }
         
-        callbacksPublisher.send(.load(url))
-        return true
+        return false
     }
     
     func reloadCurrentPage() {
@@ -129,6 +130,12 @@ class WebViewModel: NSObject {
                     break
                 }
             }.store(in: &cancellables)
+    }
+    
+    private func createSearchURL(for string: String) -> URL {
+        var components = URLComponents(string: Constants.URL.DefaultSearchEngine)!
+        components.queryItems = [URLQueryItem(name: "q", value: string)]
+        return components.url!
     }
 }
 
