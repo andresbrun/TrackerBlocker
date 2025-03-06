@@ -245,13 +245,9 @@ class WebViewController: UIViewController {
         ])        
     }
     
-    private func showErrorView(icon: UIImage, title: String, subtitle: String) {
+    private func showErrorView(model: WebViewError) {
         toggleView(showErrorView: true)
-        errorView.configure(
-            image: icon,
-            title: title,
-            description: subtitle
-        )
+        errorView.configure(model: model)
     }
     
     private func hideErrorView() {
@@ -323,8 +319,8 @@ class WebViewController: UIViewController {
             .sink { [weak self] state in
                 guard let self else { return }
                 switch state {
-                case let .error(title, description, image):
-                    showErrorView(icon: image, title: title, subtitle: description)
+                case let .error(model):
+                    showErrorView(model: model)
                     progressBar.isHidden = true
                 case .loaded:
                     hideErrorView()

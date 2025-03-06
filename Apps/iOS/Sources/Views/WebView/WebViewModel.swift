@@ -11,7 +11,7 @@ enum WebViewState {
     case empty
     case loaded
     case loading(Double)
-    case error(String, String, UIImage)
+    case error(WebViewError)
 }
 
 class WebViewModel: NSObject {
@@ -185,11 +185,7 @@ extension WebViewModel: WKNavigationDelegate {
         Logger.default.error("WebView did fail navigation with error: \(error)")
         updateNavigationState(
             webView,
-            state: .error(
-                IOSStrings.Webviewcontroller.Error.Generic.title,
-                IOSStrings.Webviewcontroller.Error.Generic.description,
-                IOSAsset.Assets.ilGenericError.image
-            )
+            state: .error(.generic)
         )
     }
     
@@ -201,11 +197,7 @@ extension WebViewModel: WKNavigationDelegate {
         Logger.default.error("WebView did fail ProvisionalNavigation with error: \(error)")
         updateNavigationState(
             webView,
-            state: .error(
-                IOSStrings.Webviewcontroller.Error.Generic.title,
-                IOSStrings.Webviewcontroller.Error.Generic.description,
-                IOSAsset.Assets.ilGenericError.image
-            )
+            state: .error(.generic)
         )
     }
     

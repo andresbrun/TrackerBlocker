@@ -60,9 +60,9 @@ class WebViewErrorView: UIView {
         backgroundColor = IOSAsset.Colors.webViewBackgroundColor.color
     }
     
-    func configure(image: UIImage?, title: String, description: String) {
-        imageView.image = image
-        titleLabel.text = title
-        descriptionLabel.text = description
+    func configure(model: WebViewError) {
+        imageView.image = model.icon
+        titleLabel.text = model.title
+        descriptionLabel.text = model.message
     }
 } 
