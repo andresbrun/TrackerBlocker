@@ -1,13 +1,11 @@
 import SwiftUI
 
 struct WhitelistDomainsListView: View {
-    // MARK: - Constants
-    private let InternalPadding = 8.0
-    
     // MARK: - State
     @StateObject var viewModel: WhitelistDomainsListViewModel
     @State private var newDomain: String = ""
 
+    // MARK: - View Builders
     var body: some View {
         NavigationView {
             List {
@@ -24,19 +22,14 @@ struct WhitelistDomainsListView: View {
             .navigationTitle(viewModel.navigationBarTitle)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        dismissView()
-                    }) {
-                        Image(systemName: "xmark")
-                            .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
-                    }
+                    closeButton()
                 }
             }
         }
     }
     
     private func createItemView(with domain: String) -> some View {
-        HStack(spacing: InternalPadding) {
+        HStack(spacing: Dimensions.Spacing.Default) {
             Image(systemName: "globe")
             Text(domain)
         }
@@ -44,7 +37,7 @@ struct WhitelistDomainsListView: View {
     }
     
     private func createNewDomainItemView() -> some View {
-        HStack(spacing: InternalPadding) {
+        HStack(spacing: Dimensions.Spacing.Default) {
             Image(systemName: "plus.circle")
             TextField("Enter new domain", text: $newDomain)
                 .keyboardType(.URL)
@@ -57,13 +50,19 @@ struct WhitelistDomainsListView: View {
         }
         .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
     }
+    
+    private func closeButton() -> some View {
+        Button(action: {
+            viewModel.dismissView()
+        }) {
+            Image(systemName: "xmark")
+                .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
+        }
+    }
 
+    // MARK: - Private
     private func addDomain() {
         guard viewModel.addDomain(newDomain) else { return }
         newDomain = ""
-    }
-
-    private func dismissView() {
-        viewModel.dismissView()
     }
 }

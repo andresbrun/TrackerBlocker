@@ -2,6 +2,11 @@ import Combine
 import WebKit
 import os
 
+enum WhitelistDomainState {
+    case protected
+    case unprotected
+}
+
 class WebViewModel: NSObject {
     // MARK: - Dependencies
     private let whitelistDomainsManager: WhitelistDomainsManager
@@ -15,7 +20,7 @@ class WebViewModel: NSObject {
     @Published var canGoBack: Bool = false
     @Published var canGoForward: Bool = false
     @Published var estimatedProgress: Double = 0.0
-    @Published var toggleWhitelistDomainActive: Bool = false
+    @Published var whitelistDomainState: WhitelistDomainState = .unprotected
     
     private var navigationStartTime: Date?
     private var cancellables = Set<AnyCancellable>()
@@ -159,7 +164,8 @@ extension WebViewModel: WKNavigationDelegate {
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
         if shouldShowWhitelistUIControls {
-            toggleWhitelistDomainActive = whitelistDomainsManager.contains(webView.url)
+            let whitelisted = whitelistDomainsManager.contains(webView.url)
+            whitelistDomainState = whitelisted ? .unprotected : .protected
         }
     }
 }

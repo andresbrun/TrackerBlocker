@@ -5,15 +5,15 @@ import Combine
 class MockWhitelistDomainsManager: WhitelistDomainsManager {
     var updates = CurrentValueSubject<[String], Never>([])
     
-    func getAll() async -> [String] {
+    func getAll() -> [String] {
         updates.value
     }
     
-    func add(_ domain: String) async {
+    func add(_ domain: String) {
         updates.value.append(domain)
     }
     
-    func remove(_ domain: String) async {
+    func remove(_ domain: String) {
         updates.value.removeAll { $0 == domain }
     }
 } 

@@ -5,15 +5,6 @@ import os
 
 class WebViewController: UIViewController {
     
-    // MARK: - Constants
-    private let stackViewSpacing: CGFloat = 8.0
-    private let addressBarHeight: CGFloat = 40.0
-    private let toolbarHeight: CGFloat = 44.0
-    private let keyboardAnimationDuration: TimeInterval = 0.3
-    private let scrollAnimationDuration: TimeInterval = 0.3
-    private let padding: CGFloat = 8.0
-    private let minThreasholdToHideBottomView: CGFloat = 100.0
-    
     // MARK: - Dependencies
     private let viewModel: WebViewModel
     private let configuration: WKWebViewConfiguration
@@ -65,9 +56,9 @@ class WebViewController: UIViewController {
             ]
         )
         view.axis = .vertical
-        view.spacing = padding
+        view.spacing = Dimensions.Spacing.Default
         view.translatesAutoresizingMaskIntoConstraints = false
-        let wrappedView = view.padding(all: padding)
+        let wrappedView = view.padding(all: Dimensions.Padding.Default)
         wrappedView.backgroundColor = IOSAsset.Colors.primaryBackgroundColor.color
         return wrappedView
     }()
@@ -90,12 +81,12 @@ class WebViewController: UIViewController {
         addressTextField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
         view.axis = .horizontal
-        view.spacing = stackViewSpacing
+        view.spacing = Dimensions.Spacing.Default
         view.translatesAutoresizingMaskIntoConstraints = false
         
-        let wrappedView = view.padding(all: 8)
+        let wrappedView = view.padding(all: Dimensions.Padding.Default)
         wrappedView.backgroundColor = IOSAsset.Colors.secondaryBackgroundColor.color
-        wrappedView.heightAnchor.constraint(equalToConstant: addressBarHeight).isActive = true
+        wrappedView.heightAnchor.constraint(equalToConstant: Dimensions.Size.AddressBarHeight).isActive = true
         wrappedView.layer.cornerRadius = 8
         return wrappedView
     }()
@@ -153,10 +144,10 @@ class WebViewController: UIViewController {
             view.insertArrangedSubview(openWhitelistDomainsButton, at: 0)
         }
         view.axis = .horizontal
-        view.spacing = 44
-        view.heightAnchor.constraint(equalToConstant: toolbarHeight).isActive = true
+        view.spacing = Dimensions.Spacing.Large
+        view.heightAnchor.constraint(equalToConstant: Dimensions.Size.ToolbarHeight).isActive = true
         view.translatesAutoresizingMaskIntoConstraints = false
-        return view.padding(horizontal: padding)
+        return view.padding(horizontal: Dimensions.Padding.Default)
     }()
     
     private lazy var backButton: UIButton = {
@@ -202,6 +193,7 @@ class WebViewController: UIViewController {
         return button
     }()
     
+    // MARK: - Lifecycle
     init(
         configuration: WKWebViewConfiguration,
         viewModel: WebViewModel
@@ -229,6 +221,7 @@ class WebViewController: UIViewController {
         viewModel.loadDefaultPage()
     }
     
+    // MARK: - Private
     private func setupUI() {
         view.backgroundColor = IOSAsset.Colors.primaryBackgroundColor.color
         view.addSubview(mainStackView)
@@ -242,6 +235,30 @@ class WebViewController: UIViewController {
             mainStackViewBottomConstraint!
         ])
     }
+    
+    // MARK: - Actions
+    
+    @objc private func goBack() {
+        viewModel.goBack()
+    }
+    
+    @objc private func goForward() {
+        viewModel.goForward()
+    }
+    
+    @objc private func reloadPage() {
+        viewModel.reloadCurrentPage()
+    }
+    
+    @objc private func toggleWhitelistDomain() {
+        viewModel.toggleWhitelistDomain(for: webView.url?.host())
+    }
+    
+    @objc private func openWhitelistDomainsListView() {
+        viewModel.showWhiteListDomainsListView()
+    }
+    
+    // MARK: - Observers
     
     private func bindViewModel() {
         viewModel.$currentURL
@@ -257,6 +274,17 @@ class WebViewController: UIViewController {
         viewModel.$canGoForward
             .assign(to: \.isEnabled, on: forwardButton)
             .store(in: &cancellables)
+        
+        if viewModel.shouldShowWhitelistUIControls {
+            viewModel.$whitelistDomainState
+                .sink { [weak self] state in
+                    self?.toggleWhitelistDomainButton.setImage(
+                        state.icon,
+                        for: .normal
+                    )
+                }
+                .store(in: &cancellables)
+        }
         
         viewModel.$estimatedProgress
             .sink { [weak self] progress in
@@ -317,7 +345,7 @@ class WebViewController: UIViewController {
             let offset = view.safeAreaInsets.bottom - keyboardFrame.height
             mainStackViewBottomConstraint?.constant = offset
             isKeyboardVisible = true
-            let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? keyboardAnimationDuration
+            let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? Dimensions.Animation.KeyboardDuration
             UIView.animate(withDuration: duration) {
                 self.view.layoutIfNeeded()
             }
@@ -327,32 +355,10 @@ class WebViewController: UIViewController {
     @objc private func keyboardWillHide(_ notification: Notification) {
         mainStackViewBottomConstraint?.constant = 0
         isKeyboardVisible = false
-        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? keyboardAnimationDuration
+        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval ?? Dimensions.Animation.KeyboardDuration
         UIView.animate(withDuration: duration) {
             self.view.layoutIfNeeded()
         }
-    }
-    
-    // MARK: - Actions
-    
-    @objc private func goBack() {
-        viewModel.goBack()
-    }
-    
-    @objc private func goForward() {
-        viewModel.goForward()
-    }
-    
-    @objc private func reloadPage() {
-        viewModel.reloadCurrentPage()
-    }
-    
-    @objc private func toggleWhitelistDomain() {
-        viewModel.toggleWhitelistDomain(for: webView.url?.host())
-    }
-    
-    @objc private func openWhitelistDomainsListView() {
-        viewModel.showWhiteListDomainsListView()
     }
 }
 
@@ -370,7 +376,7 @@ extension WebViewController: UIScrollViewDelegate {
         guard !isKeyboardVisible else { return }
         guard scrollView.isDragging else { return }
         let currentOffset = scrollView.contentOffset.y
-        guard currentOffset > minThreasholdToHideBottomView else { return }
+        guard currentOffset > Dimensions.Threashold.MinToHideBottomView else { return }
         
         if currentOffset < lastContentOffset {
             mainStackViewBottomConstraint?.constant = 0
@@ -380,8 +386,19 @@ extension WebViewController: UIScrollViewDelegate {
         
         lastContentOffset = currentOffset
         
-        UIView.animate(withDuration: scrollAnimationDuration) {
+        UIView.animate(withDuration: Dimensions.Animation.ScrollDuration) {
             self.view.layoutIfNeeded()
+        }
+    }
+}
+
+extension WhitelistDomainState {
+    var icon: UIImage {
+        switch self {
+        case .protected:
+            IOSAsset.Assets.icProtectionEnabled.image
+        case .unprotected:
+            IOSAsset.Assets.icProtectionDisabled.image
         }
     }
 }

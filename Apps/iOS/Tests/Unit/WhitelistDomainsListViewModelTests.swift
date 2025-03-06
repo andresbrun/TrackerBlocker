@@ -27,7 +27,7 @@ class WhitelistDomainsListViewModelTests: XCTestCase {
         super.tearDown()
     }
 
-    func testAddDomainSuccessfully() async {
+    func testAddDomainSuccessfully() {
         let domain = "example.com"
         let result = viewModel.addDomain(domain)
         
@@ -43,7 +43,7 @@ class WhitelistDomainsListViewModelTests: XCTestCase {
         XCTAssertEqual(mockNavigator.alertTitle, IOSStrings.Whitelistdomainsview.Alert.InvalidDomain.title)
     }
 
-    func testAddDuplicateDomain() async {
+    func testAddDuplicateDomain() {
         let domain = "example.com"
         viewModel.domains = [domain]
         
