@@ -26,3 +26,6 @@
 "webviewcontroller.toggle_whitelist_domain_button.accessibility_hint" = "Toggle the current domain's whitelist status";
 
 "webviewcontroller.progress_bar.accessibility_label" = "Loading Progress";
+
+"webviewcontroller.error.generic.title" = "TrackerBlocker MVP can't load this page.";
+"webviewcontroller.error.generic.description" = "A server with the specified hostname could not be found";

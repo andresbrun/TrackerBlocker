@@ -7,6 +7,13 @@ enum WhitelistDomainState {
     case unprotected
 }
 
+enum WebViewState {
+    case empty
+    case loaded
+    case loading(Double)
+    case error(String, String, UIImage)
+}
+
 class WebViewModel: NSObject {
     // MARK: - Dependencies
     private let whitelistDomainsManager: WhitelistDomainsManager
@@ -19,8 +26,8 @@ class WebViewModel: NSObject {
     @Published var currentURL: URL?
     @Published var canGoBack: Bool = false
     @Published var canGoForward: Bool = false
-    @Published var estimatedProgress: Double = 0.0
     @Published var whitelistDomainState: WhitelistDomainState = .unprotected
+    @Published var webViewState: WebViewState = .empty
     
     private var navigationStartTime: Date?
     private var cancellables = Set<AnyCancellable>()
@@ -55,6 +62,10 @@ class WebViewModel: NSObject {
     func loadDefaultPage() {
         let url = URL(string: Constants.URL.DefaultSearchEngine)!
         callbacksPublisher.send(.load(url))
+    }
+    
+    func updateEstimatedProgress(progress: Double) {
+        webViewState = .loading(progress)
     }
     
     func tryToLoad(absoluteString: String?) -> Bool {
@@ -146,24 +157,67 @@ class WebViewModel: NSObject {
 }
 
 extension WebViewModel: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+    func webView(
+        _ webView: WKWebView,
+        didStartProvisionalNavigation navigation: WKNavigation!
+    ) {
         navigationStartTime = Date()
-        updateNavigationState(webView)
+        updateNavigationState(webView, state: .loading(webView.estimatedProgress))
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
+    func webView(
+        _ webView: WKWebView,
+        didFinish navigation: WKNavigation?
+    ) {
         if let url = webView.url, let navigationStartTime {
             let loadTime = Int(Date().timeIntervalSince(navigationStartTime) * 1000)
             Logger.default.info("WebView did finish navigation in \(loadTime)ms to \(url)")
             analyticsServices.trackEvent(.webViewLoaded(url, loadTime))
         }
-        updateNavigationState(webView)
+        updateNavigationState(webView, state: .loaded)
     }
 
-    private func updateNavigationState(_ webView: WKWebView) {
+    func webView(
+        _ webView: WKWebView,
+        didFail navigation: WKNavigation!,
+        withError error: any Error
+    ) {
+        Logger.default.error("WebView did fail navigation with error: \(error)")
+        updateNavigationState(
+            webView,
+            state: .error(
+                IOSStrings.Webviewcontroller.Error.Generic.title,
+                IOSStrings.Webviewcontroller.Error.Generic.description,
+                IOSAsset.Assets.ilGenericError.image
+            )
+        )
+    }
+    
+    func webView(
+        _ webView: WKWebView,
+        didFailProvisionalNavigation navigation: WKNavigation!,
+        withError error: any Error
+    ) {
+        Logger.default.error("WebView did fail ProvisionalNavigation with error: \(error)")
+        updateNavigationState(
+            webView,
+            state: .error(
+                IOSStrings.Webviewcontroller.Error.Generic.title,
+                IOSStrings.Webviewcontroller.Error.Generic.description,
+                IOSAsset.Assets.ilGenericError.image
+            )
+        )
+    }
+    
+    private func updateNavigationState(
+        _ webView: WKWebView,
+        state: WebViewState
+    ) {
         currentURL = webView.url
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
+        webViewState = state
+        
         if shouldShowWhitelistUIControls {
             let whitelisted = whitelistDomainsManager.contains(webView.url)
             whitelistDomainState = whitelisted ? .unprotected : .protected

@@ -21,6 +21,7 @@ class WebViewController: UIViewController {
         let view = UIStackView(
             arrangedSubviews: [
                 webView,
+                errorView,
                 progressBar,
                 addressBarAndToolbarView
             ]
@@ -194,6 +195,13 @@ class WebViewController: UIViewController {
         return button
     }()
     
+    private lazy var errorView: WebViewErrorView = {
+        let view = WebViewErrorView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+    
     // MARK: - Lifecycle
     init(
         configuration: WKWebViewConfiguration,
@@ -234,7 +242,25 @@ class WebViewController: UIViewController {
             mainStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             mainStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mainStackViewBottomConstraint!
-        ])
+        ])        
+    }
+    
+    private func showErrorView(icon: UIImage, title: String, subtitle: String) {
+        toggleView(showErrorView: true)
+        errorView.configure(
+            image: icon,
+            title: title,
+            description: subtitle
+        )
+    }
+    
+    private func hideErrorView() {
+        toggleView(showErrorView: false)
+    }
+    
+    private func toggleView(showErrorView: Bool) {
+        webView.isHidden = showErrorView
+        errorView.isHidden = !showErrorView
     }
     
     // MARK: - Actions
@@ -263,21 +289,25 @@ class WebViewController: UIViewController {
     
     private func bindViewModel() {
         viewModel.$currentURL
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] url in
                 self?.addressTextField.text = url?.absoluteString
             }
             .store(in: &cancellables)
         
         viewModel.$canGoBack
+            .receive(on: DispatchQueue.main)
             .assign(to: \.isEnabled, on: backButton)
             .store(in: &cancellables)
         
         viewModel.$canGoForward
+            .receive(on: DispatchQueue.main)
             .assign(to: \.isEnabled, on: forwardButton)
             .store(in: &cancellables)
         
         if viewModel.shouldShowWhitelistUIControls {
             viewModel.$whitelistDomainState
+                .receive(on: DispatchQueue.main)
                 .sink { [weak self] state in
                     self?.toggleWhitelistDomainButton.setImage(
                         state.icon,
@@ -286,15 +316,30 @@ class WebViewController: UIViewController {
                 }
                 .store(in: &cancellables)
         }
+
         
-        viewModel.$estimatedProgress
-            .sink { [weak self] progress in
-                self?.progressBar.progress = Float(progress)
-                self?.progressBar.isHidden = progress == 1
+        viewModel.$webViewState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self else { return }
+                switch state {
+                case let .error(title, description, image):
+                    showErrorView(icon: image, title: title, subtitle: description)
+                    progressBar.isHidden = true
+                case .loaded:
+                    hideErrorView()
+                    progressBar.isHidden = true
+                case .loading(let progress):
+                    progressBar.progress = Float(progress)
+                    progressBar.isHidden = progress == 1
+                case .empty:
+                    break
+                }
             }
             .store(in: &cancellables)
         
         viewModel.callbacksPublisher
+            .receive(on: DispatchQueue.main)
             .sink { [unowned webView] callback in
                 switch callback {
                 case .load(let url):
@@ -327,9 +372,7 @@ class WebViewController: UIViewController {
     
     private func setupEstimatedProgressObserver() {
         observer = webView.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, change in
-            DispatchQueue.main.async {
-                self?.viewModel.estimatedProgress = webView.estimatedProgress
-            }
+            self?.viewModel.updateEstimatedProgress(progress: webView.estimatedProgress)
         }
     }
     

@@ -26,3 +26,6 @@
 "webviewcontroller.toggle_whitelist_domain_button.accessibility_hint" = "Alternar el estado de la lista blanca del dominio actual";
 
 "webviewcontroller.progress_bar.accessibility_label" = "Progreso de carga";
+
+"webviewcontroller.error.generic.title" = "TrackerBlocker MVP no puede cargar esta página.";
+"webviewcontroller.error.generic.description" = "No se pudo encontrar un servidor con el nombre de host especificado";

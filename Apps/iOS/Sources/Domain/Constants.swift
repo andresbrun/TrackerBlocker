@@ -15,7 +15,7 @@ struct Dimensions {
     
     struct Spacing {
         static let Default: CGFloat = 8
-        static let Large: CGFloat = 8
+        static let Large: CGFloat = 32
     }
     
     struct Padding {
