@@ -18,7 +18,7 @@ class AppCompositionRoot {
         AnalyticsServices()
     }()
     
-    private lazy var featureStore: FeatureStore = {
+    lazy var featureStore: FeatureStore = {
         FeatureStore(
             provider: FakeFeatureProvider()
         )

@@ -5,3 +5,24 @@
 "whitelistdomainsview.alert.duplicated_domain.description" = "El dominio '%1$@' ya está en la lista";
 
 "whitelistdomainsview.navigation_bar.title" = "Dominios Permitidos";
+
+"webviewcontroller.address_textfield.placeholder" = "Introducir dirección";
+"webviewcontroller.address_textfield.accessibility_label" = "Campo de dirección";
+"webviewcontroller.address_textfield.accessibility_hint" = "Introduzca la dirección web que desea visitar";
+
+"webviewcontroller.back_button.accessibility_label" = "Atrás";
+"webviewcontroller.back_button.accessibility_hint" = "Volver a la página anterior";
+
+"webviewcontroller.forward_button.accessibility_label" = "Adelante";
+"webviewcontroller.forward_button.accessibility_hint" = "Ir a la página siguiente";
+
+"webviewcontroller.reload_button.accessibility_label" = "Recargar";
+"webviewcontroller.reload_button.accessibility_hint" = "Recargar la página actual";
+
+"webviewcontroller.open_whitelist_domains_button.accessibility_label" = "Abrir dominios permitidos";
+"webviewcontroller.open_whitelist_domains_button.accessibility_hint" = "Ver la lista de dominios permitidos";
+
+"webviewcontroller.toggle_whitelist_domain_button.accessibility_label" = "Alternar dominio permitido";
+"webviewcontroller.toggle_whitelist_domain_button.accessibility_hint" = "Alternar el estado de la lista blanca del dominio actual";
+
+"webviewcontroller.progress_bar.accessibility_label" = "Progreso de carga";

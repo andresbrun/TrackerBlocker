@@ -5,3 +5,24 @@
 "whitelistdomainsview.alert.duplicated_domain.description" = "The domain '%1$@' is already in the list";
 
 "whitelistdomainsview.navigation_bar.title" = "Whitelist Domains";
+
+"webviewcontroller.address_textfield.placeholder" = "Enter Address";
+"webviewcontroller.address_textfield.accessibility_label" = "Address Field";
+"webviewcontroller.address_textfield.accessibility_hint" = "Enter the web address you want to visit";
+
+"webviewcontroller.back_button.accessibility_label" = "Back";
+"webviewcontroller.back_button.accessibility_hint" = "Go back to the previous page";
+
+"webviewcontroller.forward_button.accessibility_label" = "Forward";
+"webviewcontroller.forward_button.accessibility_hint" = "Go forward to the next page";
+
+"webviewcontroller.reload_button.accessibility_label" = "Reload";
+"webviewcontroller.reload_button.accessibility_hint" = "Reload the current page";
+
+"webviewcontroller.open_whitelist_domains_button.accessibility_label" = "Open Whitelist Domains";
+"webviewcontroller.open_whitelist_domains_button.accessibility_hint" = "View the list of whitelisted domains";
+
+"webviewcontroller.toggle_whitelist_domain_button.accessibility_label" = "Toggle Whitelist Domain";
+"webviewcontroller.toggle_whitelist_domain_button.accessibility_hint" = "Toggle the current domain's whitelist status";
+
+"webviewcontroller.progress_bar.accessibility_label" = "Loading Progress";

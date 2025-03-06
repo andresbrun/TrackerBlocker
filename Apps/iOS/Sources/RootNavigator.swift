@@ -40,9 +40,10 @@ class AppRootNavigator: NSObject, RootNavigator {
     }
     
     private func initializeRulesManagerIfNeeded() {
-        if NSClassFromString("XCTestCase") == nil {
-            appCompositionRoot.wkContentRuleListManager.onInit()
-        }
+        guard NSClassFromString("XCTestCase") == nil else { return }
+        guard appCompositionRoot.featureStore.isFeatureEnabled(.enhancedTrackingProtection) else { return }
+        
+        appCompositionRoot.wkContentRuleListManager.onInit()
     }
     
     func presentAlert(title: String, description: String) {
