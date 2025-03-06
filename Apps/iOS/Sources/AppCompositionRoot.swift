@@ -31,7 +31,8 @@ class AppCompositionRoot {
             tdsAPI: DefaultTrackerDataSetAPI(),
             fileCache: DefaultTDSFileStorageCache(),
             whitelistDomainsUpdates: whitelistDomainsUpdates,
-            ruleListStateUpdates: ruleListStateUpdates
+            ruleListStateUpdates: ruleListStateUpdates,
+            analyticsServices: analyticsServices
         )
     }()
     

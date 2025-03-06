@@ -15,6 +15,7 @@ class WKContentRuleListManagerTests: XCTestCase {
     private var fileCache: MockTDSFileStorageCache!
     private var whitelistDomainsUpdates: CurrentValueSubject<[String], Never>!
     private var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>!
+    private var analyticsServices: MockAnalyticsServices!
     private var manager: WKContentRuleListManager!
     
     override func setUp() {
@@ -100,6 +101,7 @@ extension WKContentRuleListManagerTests {
         fileCache = MockTDSFileStorageCache()
         whitelistDomainsUpdates = CurrentValueSubject<[String], Never>([])
         ruleListStateUpdates = CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
+        analyticsServices = MockAnalyticsServices()
         manager = createSut()
     }
     
@@ -115,7 +117,7 @@ extension WKContentRuleListManagerTests {
             forKey: WKContentRuleListManager.Constants.EtagKey
         )
         userDefaults.setValue(
-            "existing_etag_",
+            try! JSONEncoder().encode(Identifier(etag: "existing_etag", domains: [])),
             forKey: WKContentRuleListManager.Constants.IdentifierKey
         )
         tdsAPI.shouldReturnNewEtag = false
@@ -130,7 +132,7 @@ extension WKContentRuleListManagerTests {
             forKey: WKContentRuleListManager.Constants.EtagKey
         )
         userDefaults.setValue(
-            "existing_etag_",
+            try! JSONEncoder().encode(Identifier(etag: "existing_etag", domains: [])),
             forKey: WKContentRuleListManager.Constants.IdentifierKey
         )
         tdsAPI.shouldReturnNewEtag = false
@@ -194,7 +196,8 @@ extension WKContentRuleListManagerTests {
             tdsAPI: tdsAPI,
             fileCache: fileCache,
             whitelistDomainsUpdates: whitelistDomainsUpdates,
-            ruleListStateUpdates: ruleListStateUpdates
+            ruleListStateUpdates: ruleListStateUpdates,
+            analyticsServices: analyticsServices
         )
     }
 }

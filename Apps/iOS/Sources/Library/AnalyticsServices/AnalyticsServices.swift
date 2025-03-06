@@ -13,6 +13,8 @@ enum AnalyticsEvent {
     case webViewReloadTapped
     case webViewWhitelistDomainsViewTapped
     case webViewWhitelistDomainToggle(Bool, String)
+    case contentRuleListError(_ errorType: String, _ details: String)
+    case contentRuleListCompileSucceded(Double)
     
     var name: String {
         switch self {
@@ -23,6 +25,8 @@ enum AnalyticsEvent {
         case .webViewReloadTapped: "app-web_view_reload_tapped"
         case .webViewWhitelistDomainsViewTapped: "app-web_whitelist_domains_view_tapped"
         case .webViewWhitelistDomainToggle: "app-web_whitelist_toggle_tapped"
+        case .contentRuleListError: "app-content_rule_list_error"
+        case .contentRuleListCompileSucceded: "app-content_rule_compile_succeded"
         }
     }
     
@@ -41,6 +45,15 @@ enum AnalyticsEvent {
             [
                 "action": added ? "added" : "removed",
                 "domain": domain
+            ]
+        case .contentRuleListError(let errorType, let details):
+            [
+                "error_type": errorType,
+                "details": details
+            ]
+        case .contentRuleListCompileSucceded(let duration):
+            [
+                "duration": "\(duration)"
             ]
         default:
             [:]
