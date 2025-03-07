@@ -99,24 +99,10 @@ final class WebViewModel: NSObject {
         analyticsServices.trackEvent(.webViewGoForwardTapped)
         callbacksPublisher.send(.goForward)
     }
-    
-    func toggleWhitelistDomain(for host: String?) {
-        guard let host else { return }
-        
-        if whitelistDomainsManager.getAll().contains(host) {
-            Logger.default.info("Removing \(host) from whitelist")
-            analyticsServices.trackEvent(.webViewWhitelistDomainToggle(false, host))
-            whitelistDomainsManager.remove(host)
-        } else {
-            Logger.default.info("Adding \(host) in whitelist")
-            analyticsServices.trackEvent(.webViewWhitelistDomainToggle(true, host))
-            whitelistDomainsManager.add(host)
-        }
-    }
-    
+
     func showWhiteListDomainsListView() {
         analyticsServices.trackEvent(.webViewWhitelistDomainsViewTapped)
-        navigator.showWhiteListDomainsListView()
+        navigator.showWhiteListDomainsListView(currentDomain: currentURL?.host())
     }
     
     // MARK: - Accessors

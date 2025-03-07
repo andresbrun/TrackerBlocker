@@ -29,3 +29,6 @@
 
 "webviewcontroller.error.generic.title" = "TrackerBlocker MVP no puede cargar esta página.";
 "webviewcontroller.error.generic.description" = "No se pudo encontrar un servidor con el nombre de host especificado";
+
+"whitelistdomainsview.section.current_website" = "Sitio Web Actual";
+"whitelistdomainsview.section.all_websites" = "Todos los Sitios Web";

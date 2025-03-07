@@ -9,15 +9,27 @@ struct WhitelistDomainsListView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.domains, id: \.self) { domain in
-                    createItemView(with: domain)
-                }
-                .onDelete(perform: { indexSet in
-                    withAnimation {
-                        viewModel.removeDomain(at: indexSet)
+                if let currentDomain = viewModel.currentDomain {
+                    Section {
+                        createCurrentItemView(with: currentDomain)
+                    } header: {
+                        Text(viewModel.currentWebsiteTitle)
                     }
-                })
-                createNewDomainItemView()
+                }
+
+                Section {
+                    ForEach(viewModel.domains, id: \.self) { domain in
+                        createItemView(with: domain)
+                    }
+                    .onDelete(perform: { indexSet in
+                        withAnimation {
+                            viewModel.removeDomain(at: indexSet)
+                        }
+                    })
+                    createNewDomainItemView()
+                } header: {
+                    Text(viewModel.allWebsitesTitle)
+                }
             }
             .navigationTitle(viewModel.navigationBarTitle)
             .toolbar {
@@ -34,6 +46,18 @@ struct WhitelistDomainsListView: View {
             Text(domain)
         }
         .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
+    }
+    
+    private func createCurrentItemView(with currentDomain: String) -> some View {
+        HStack(spacing: Dimensions.Spacing.Default) {
+            Image(systemName: "globe")
+            Text(currentDomain)
+            Spacer()
+            Toggle("", isOn: $viewModel.isCurrentDomainWhitelisted)
+                .onChange(of: viewModel.isCurrentDomainWhitelisted) { old, new in
+                    viewModel.toggleCurrentDomain(enable: new)
+                }
+        }
     }
     
     private func createNewDomainItemView() -> some View {

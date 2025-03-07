@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 
 protocol RootNavigator: NSObject {
-    func showWhiteListDomainsListView()
+    func showWhiteListDomainsListView(currentDomain: String?)
     func initializeNavigation(in window: UIWindow)
 
     func presentAlert(title: String, description: String)
@@ -23,8 +23,12 @@ final class AppRootNavigator: NSObject, RootNavigator {
         appCompositionRoot.rootNavigator = self
     }
     
-    func showWhiteListDomainsListView() {
-        let vc = appCompositionRoot.createWhitelistDomainsListView()
+    func showWhiteListDomainsListView(
+        currentDomain: String?
+    ) {
+        let vc = appCompositionRoot.createWhitelistDomainsListView(
+            currentDomain: currentDomain
+        )
         rootNavigationController?.present(vc, animated: true)
     }
     

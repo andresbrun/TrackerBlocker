@@ -70,9 +70,9 @@ final class WebViewController: UIViewController {
             reloadButton
         ])
         if viewModel.shouldShowWhitelistUIControls {
-            view.insertArrangedSubview(toggleWhitelistDomainButton, at: 0)
-            toggleWhitelistDomainButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            toggleWhitelistDomainButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+            view.insertArrangedSubview(openWhitelistDomainsListButton, at: 0)
+            openWhitelistDomainsListButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+            openWhitelistDomainsListButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         }
         
         reloadButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
@@ -122,16 +122,16 @@ final class WebViewController: UIViewController {
         return button
     }()
     
-    private lazy var toggleWhitelistDomainButton: UIButton = {
+    private lazy var openWhitelistDomainsListButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(
             IOSAsset.Assets.icProtectionEnabled.image,
             for: .normal
         )
         button.tintColor = IOSAsset.Colors.textColor.color
-        button.addTarget(self, action: #selector(toggleWhitelistDomain), for: .touchUpInside)
-        button.accessibilityLabel = IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityLabel
-        button.accessibilityHint = IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityHint
+        button.addTarget(self, action: #selector(openWhitelistDomainsListView), for: .touchUpInside)
+        button.accessibilityLabel = IOSStrings.Webviewcontroller.OpenWhitelistDomainsButton.accessibilityLabel
+        button.accessibilityHint = IOSStrings.Webviewcontroller.OpenWhitelistDomainsButton.accessibilityHint
         button.accessibilityTraits = .button
         return button
     }()
@@ -142,9 +142,6 @@ final class WebViewController: UIViewController {
             backButton,
             forwardButton
         ])
-        if viewModel.shouldShowWhitelistUIControls {
-            view.insertArrangedSubview(openWhitelistDomainsButton, at: 0)
-        }
         view.axis = .horizontal
         view.spacing = Dimensions.Spacing.Large
         view.heightAnchor.constraint(equalToConstant: Dimensions.Size.ToolbarHeight).isActive = true
@@ -176,21 +173,6 @@ final class WebViewController: UIViewController {
         button.addTarget(self, action: #selector(goForward), for: .touchUpInside)
         button.accessibilityLabel = IOSStrings.Webviewcontroller.ForwardButton.accessibilityLabel
         button.accessibilityHint = IOSStrings.Webviewcontroller.ForwardButton.accessibilityHint
-        button.accessibilityTraits = .button
-        return button
-    }()
-    
-    private lazy var openWhitelistDomainsButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(
-            IOSAsset.Assets.icBookmarks.image,
-            for: .normal
-        )
-        button.tintColor = IOSAsset.Colors.textColor.color
-        button.addTarget(self, action: #selector(openWhitelistDomainsListView), for: .touchUpInside)
-        button.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        button.accessibilityLabel = IOSStrings.Webviewcontroller.OpenWhitelistDomainsButton.accessibilityLabel
-        button.accessibilityHint = IOSStrings.Webviewcontroller.OpenWhitelistDomainsButton.accessibilityHint
         button.accessibilityTraits = .button
         return button
     }()
@@ -272,11 +254,7 @@ final class WebViewController: UIViewController {
     @objc private func reloadPage() {
         viewModel.reloadCurrentPage()
     }
-    
-    @objc private func toggleWhitelistDomain() {
-        viewModel.toggleWhitelistDomain(for: webView.url?.host())
-    }
-    
+
     @objc private func openWhitelistDomainsListView() {
         viewModel.showWhiteListDomainsListView()
     }
@@ -305,7 +283,7 @@ final class WebViewController: UIViewController {
             viewModel.$whitelistDomainState
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] state in
-                    self?.toggleWhitelistDomainButton.setImage(
+                    self?.openWhitelistDomainsListButton.setImage(
                         state.icon,
                         for: .normal
                     )

@@ -29,3 +29,6 @@
 
 "webviewcontroller.error.generic.title" = "TrackerBlocker MVP can't load this page.";
 "webviewcontroller.error.generic.description" = "A server with the specified hostname could not be found";
+
+"whitelistdomainsview.section.current_website" = "Current Website";
+"whitelistdomainsview.section.all_websites" = "All Websites";

@@ -66,12 +66,16 @@ final class AppCompositionRoot {
         )
     }
     
-    func createWhitelistDomainsListView() -> UIViewController {
+    func createWhitelistDomainsListView(
+        currentDomain: String?
+    ) -> UIViewController {
         UIHostingController(
             rootView: WhitelistDomainsListView(
                 viewModel: .init(
                     manager: self.whitelistDomainsManager,
-                    rootNavigator: self.rootNavigator
+                    rootNavigator: self.rootNavigator,
+                    currentDomain: currentDomain,
+                    analyticsServices: self.analyticsServices
                 )
             )
         )

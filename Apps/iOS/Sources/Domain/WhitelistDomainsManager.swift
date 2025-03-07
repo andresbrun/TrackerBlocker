@@ -14,6 +14,11 @@ extension WhitelistDomainsManager {
         guard let host = url?.host() else { return false }
         return getAll().contains(host)
     }
+    
+    func contains(_ host: String?) -> Bool {
+        guard let host else { return false }
+        return getAll().contains(host)
+    }
 }
 
 final class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
