@@ -9,7 +9,7 @@ class MockTDSFileStorageCache: TDSFileStorageCache {
         savedInvocation = (data, etag)
     }
     
-    func getData(forETag etag: String?) throws -> Data {
+    func getCachedData() -> Data {
         .mockedTDS
     }
 } 

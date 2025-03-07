@@ -79,9 +79,8 @@ final class WKContentRuleListManager {
             await retrieveCachedRuleList(identifier: identifier)
         } else {
             logger.warning("No cached rule list found, loading cached TDS data")
-            let tdsData = await loadCachedTDS()
             await scheduleCompilationIfNeeded(
-                with: tdsData,
+                with: loadCachedTDS(),
                 whitelistDomains: whitelistDomainsUpdates.value,
                 reason: .initialLoad
             )
@@ -105,8 +104,8 @@ final class WKContentRuleListManager {
             .sink { [weak self] oldDomains, newDomains in
                 guard let self else { return }
                 logger.info("Whitelist domains updated: oldDomains=\(oldDomains), newDomains=\(newDomains)")
-                guard let cachedData = try? fileCache.getData(forETag: lastEtag) else { return }
- 
+                let cachedData = fileCache.getCachedData()
+                
                 let added = Set(newDomains).subtracting(oldDomains)
                 let removed = Set(oldDomains).subtracting(newDomains)
                 
@@ -149,9 +148,8 @@ final class WKContentRuleListManager {
         } catch let error {
             trackError(type: "lookup_error", details: error.localizedDescription)
         }
-        let tdsData = await loadCachedTDS()
         await scheduleCompilationIfNeeded(
-            with: tdsData,
+            with: loadCachedTDS(),
             whitelistDomains: whitelistDomainsUpdates.value,
             reason: .initialLoad
         )
@@ -161,8 +159,8 @@ final class WKContentRuleListManager {
         await downloadNewTDS(withETag: lastEtag)
     }
     
-    private func loadCachedTDS() async -> Data {
-        try! fileCache.getData(forETag: lastEtag)
+    private func loadCachedTDS() -> Data {
+        fileCache.getCachedData()
     }
     
     private func downloadNewTDS(withETag etag: String?) async -> Data? {

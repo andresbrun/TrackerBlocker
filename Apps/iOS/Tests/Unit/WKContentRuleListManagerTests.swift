@@ -114,11 +114,11 @@ extension WKContentRuleListManagerTests {
     private func arrangeForCachedRulesAndNoNewEtag() {
         userDefaults.setValue(
             "existing_etag",
-            forKey: WKContentRuleListManager.Constants.EtagKey
+            forKey: Constants.Key.Etag
         )
         userDefaults.setValue(
-            try! JSONEncoder().encode(Identifier(etag: "existing_etag", domains: [])),
-            forKey: WKContentRuleListManager.Constants.IdentifierKey
+            try! JSONEncoder().encode(WKContentRuleListIdentifier(etag: "existing_etag", domains: [])),
+            forKey: Constants.Key.Identifier
         )
         tdsAPI.shouldReturnNewEtag = false
         tdsAPI.shouldFailDownload = false
@@ -129,11 +129,11 @@ extension WKContentRuleListManagerTests {
     private func arrangeForOrphanIdentifierAndNoNewETag() {
         userDefaults.setValue(
             "prev_existing_etag",
-            forKey: WKContentRuleListManager.Constants.EtagKey
+            forKey: Constants.Key.Etag
         )
         userDefaults.setValue(
-            try! JSONEncoder().encode(Identifier(etag: "existing_etag", domains: [])),
-            forKey: WKContentRuleListManager.Constants.IdentifierKey
+            try! JSONEncoder().encode(WKContentRuleListIdentifier(etag: "existing_etag", domains: [])),
+            forKey: Constants.Key.Identifier
         )
         tdsAPI.shouldReturnNewEtag = false
         tdsAPI.shouldFailDownload = false
