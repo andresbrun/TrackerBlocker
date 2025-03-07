@@ -10,7 +10,7 @@ protocol RootNavigator: NSObject {
     func dismissLastPresentedViewController()
 }
 
-class AppRootNavigator: NSObject, RootNavigator {
+final class AppRootNavigator: NSObject, RootNavigator {
     private let appCompositionRoot: AppCompositionRoot
     private var rootNavigationController: UINavigationController?
     private var visibleViewController: UIViewController? {

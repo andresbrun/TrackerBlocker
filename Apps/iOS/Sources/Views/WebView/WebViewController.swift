@@ -3,7 +3,7 @@ import WebKit
 import Combine
 import os
 
-class WebViewController: UIViewController {
+final class WebViewController: UIViewController {
     
     // MARK: - Dependencies
     private let viewModel: WebViewModel

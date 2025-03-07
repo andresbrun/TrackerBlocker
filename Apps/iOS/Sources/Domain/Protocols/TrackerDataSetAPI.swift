@@ -5,11 +5,10 @@ protocol TrackerDataSetAPI {
 } 
 
 class DefaultTrackerDataSetAPI: TrackerDataSetAPI {
-    private let tdsURL = URL(string: "https://staticcdn.duckduckgo.com/trackerblocking/v2.1/tds.json")!
     
     // TODO: Review
     func downloadLatestTDS(withETag: String?) async throws -> (data: Data?, etag: String?) {
-        var request = URLRequest(url: tdsURL)
+        var request = URLRequest(url: URL(string: Constants.URL.TDS)!)
         if let etag = withETag {
             request.addValue(etag, forHTTPHeaderField: "If-None-Match")
         }
@@ -19,12 +18,12 @@ class DefaultTrackerDataSetAPI: TrackerDataSetAPI {
             return (nil, nil)
         }
         
-        // Return nil for 304 Not Modified responses
-        guard httpResponse.statusCode == 200 else {
+        switch httpResponse.statusCode {
+        case 200:
+            let newETag = httpResponse.value(forHTTPHeaderField: "ETag")
+            return (data, newETag)
+        default:
             return (nil, nil)
         }
-        
-        let newETag = httpResponse.allHeaderFields["ETag"] as? String
-        return (data, newETag)
     }
 }

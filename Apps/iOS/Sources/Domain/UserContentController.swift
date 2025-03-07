@@ -2,7 +2,7 @@ import WebKit
 import Combine
 import os
 
-final public class UserContentController: WKUserContentController {
+final class UserContentController: WKUserContentController {
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     private var cancellables = Set<AnyCancellable>()
     private let logger = Logger.default

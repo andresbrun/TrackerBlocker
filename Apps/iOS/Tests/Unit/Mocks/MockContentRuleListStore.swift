@@ -6,7 +6,9 @@ class MockContentRuleListStore: ContentRuleListStoreProtocol {
     var mockCompilationSuccess: Bool = false
     var mockLookUpSuccess: Bool = false
     
-    func lookUpContentRuleList(forIdentifier identifier: Identifier) async throws -> WKContentRuleList? {
+    func lookUpContentRuleList(
+        forIdentifier identifier: WKContentRuleListIdentifier
+    ) async throws -> WKContentRuleList? {
         if mockLookUpSuccess {
             return await WKContentRuleList()
         } else {
@@ -14,7 +16,10 @@ class MockContentRuleListStore: ContentRuleListStoreProtocol {
         }
     }
     
-    func compileContentRuleList(forIdentifier identifier: Identifier, encodedContentRuleList: String) async throws -> WKContentRuleList? {
+    func compileContentRuleList(
+        forIdentifier identifier: WKContentRuleListIdentifier,
+        encodedContentRuleList: String
+    ) async throws -> WKContentRuleList? {
         if mockCompilationSuccess {
             return await WKContentRuleList()
         } else {
@@ -22,5 +27,7 @@ class MockContentRuleListStore: ContentRuleListStoreProtocol {
         }
     }
     
-    func removeContentRuleList(forIdentifier identifier: Identifier) async throws {}
-} 
+    func removeContentRuleList(
+        forIdentifier identifier: WKContentRuleListIdentifier
+    ) async throws {}
+}

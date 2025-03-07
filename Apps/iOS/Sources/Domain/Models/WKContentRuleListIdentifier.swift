@@ -1,6 +1,6 @@
 import Foundation
 
-struct Identifier: Codable {
+struct WKContentRuleListIdentifier: Codable {
     let etag: String?
     let domains: [String]
     

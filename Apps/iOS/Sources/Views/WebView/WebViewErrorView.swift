@@ -1,6 +1,6 @@
 import UIKit
 
-class WebViewErrorView: UIView {
+final class WebViewErrorView: UIView {
     
     private lazy var stackView: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [imageView, titleLabel, descriptionLabel])

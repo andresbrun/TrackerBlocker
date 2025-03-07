@@ -9,7 +9,7 @@ protocol FeatureProvider {
 }
 
 // Since we don't have a real feature provider, we'll use a Fake
-class FakeFeatureProvider: FeatureProvider {
+final class FakeFeatureProvider: FeatureProvider {
     private var featureFlags: [FeatureFlag: Bool] = [
         .enhancedTrackingProtection: true
     ]
@@ -19,7 +19,7 @@ class FakeFeatureProvider: FeatureProvider {
     }
 }
 
-class FeatureStore {
+final class FeatureStore {
     private let provider: FeatureProvider
     
     init(provider: FeatureProvider) {

@@ -16,7 +16,7 @@ extension WhitelistDomainsManager {
     }
 }
 
-class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
+final class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
     private let fileManager = FileManager.default
     private let fileName = "whitelistDomains.txt"
     private var domains: Set<String> = [] {

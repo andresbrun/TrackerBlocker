@@ -4,12 +4,7 @@ import TrackerRadarKit
 import os
 import Foundation
 
-class WKContentRuleListManager {
-    struct Constants {
-        static let IdentifierKey = "LastRuleListIdentifier"
-        static let EtagKey = "ETag"
-    }
-    
+final class WKContentRuleListManager {
     private let userDefaults: UserDefaultsProtocol
     private let ruleListStore: ContentRuleListStoreProtocol
     private let tdsAPI: TrackerDataSetAPI
@@ -23,18 +18,27 @@ class WKContentRuleListManager {
     
     private let logger = Logger.default
     
-    private var lastIdentifier: Identifier? {
+    private var lastIdentifier: WKContentRuleListIdentifier? {
         get {
-            guard let identifierData = userDefaults.data(forKey: Constants.IdentifierKey) else { return nil }
-            return try? JSONDecoder().decode(Identifier.self, from: identifierData)
+            guard let identifierData = userDefaults.data(forKey: Constants.Key.Identifier) else { return nil }
+            return try? JSONDecoder().decode(WKContentRuleListIdentifier.self, from: identifierData)
         }
         set {
             guard let newValue else {
-                userDefaults.setValue(nil, forKey: Constants.IdentifierKey)
+                userDefaults.setValue(nil, forKey: Constants.Key.Identifier)
                 return
             }
             let identifierData = try? JSONEncoder().encode(newValue)
-            userDefaults.setValue(identifierData, forKey: Constants.IdentifierKey)
+            userDefaults.setValue(identifierData, forKey: Constants.Key.Identifier)
+        }
+    }
+    
+    private var lastEtag: String? {
+        get {
+            userDefaults.string(forKey: Constants.Key.Etag)
+        }
+        set {
+            userDefaults.setValue(newValue, forKey: Constants.Key.Etag)
         }
     }
     
@@ -101,8 +105,7 @@ class WKContentRuleListManager {
             .sink { [weak self] oldDomains, newDomains in
                 guard let self else { return }
                 logger.info("Whitelist domains updated: oldDomains=\(oldDomains), newDomains=\(newDomains)")
-                let etag = userDefaults.string(forKey: Constants.EtagKey)
-                guard let cachedData = try? fileCache.getData(forETag: etag) else { return }
+                guard let cachedData = try? fileCache.getData(forETag: lastEtag) else { return }
  
                 let added = Set(newDomains).subtracting(oldDomains)
                 let removed = Set(oldDomains).subtracting(newDomains)
@@ -134,7 +137,7 @@ class WKContentRuleListManager {
         ruleListStateUpdates.send(state)
     }
     
-    private func retrieveCachedRuleList(identifier: Identifier) async {
+    private func retrieveCachedRuleList(identifier: WKContentRuleListIdentifier) async {
         do {
             logger.info("Looking up content rule list for identifier: \(identifier)")
             if let ruleList = try await ruleListStore.lookUpContentRuleList(forIdentifier: identifier) {
@@ -155,13 +158,11 @@ class WKContentRuleListManager {
     }
     
     private func downloadTDSFileIfNeeded() async -> Data? {
-        let etag = userDefaults.string(forKey: Constants.EtagKey)
-        return await downloadNewTDS(withETag: etag)
+        await downloadNewTDS(withETag: lastEtag)
     }
     
     private func loadCachedTDS() async -> Data {
-        let etag = userDefaults.string(forKey: Constants.EtagKey)
-        return try! fileCache.getData(forETag: etag)
+        try! fileCache.getData(forETag: lastEtag)
     }
     
     private func downloadNewTDS(withETag etag: String?) async -> Data? {
@@ -174,7 +175,7 @@ class WKContentRuleListManager {
             logger.info("TDS file downloaded in \(duration) seconds")
             
             if let data = data, let newETag = newETag {
-                userDefaults.setValue(newETag, forKey: Constants.EtagKey)
+                lastEtag = newETag
                 fileCache.save(data, forETag: newETag)
                 return data
             }
@@ -199,9 +200,8 @@ class WKContentRuleListManager {
             guard let self else { return }
             
             let startTime = Date()
-            let etag = userDefaults.string(forKey: Constants.EtagKey)
             
-            let newIdentifier = Identifier(etag: etag, domains: whitelistDomains)
+            let newIdentifier = WKContentRuleListIdentifier(etag: lastEtag, domains: whitelistDomains)
             logger.info("Compilation Task(\(uuid)): Generating rule list identifier \(newIdentifier.value). Last identifier: \(String(describing: lastIdentifier?.value))")
             
             if lastIdentifier?.value == newIdentifier.value {

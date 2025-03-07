@@ -3,7 +3,7 @@ import SwiftUI
 import Combine
 import WebKit
 
-class AppCompositionRoot {
+final class AppCompositionRoot {
     public unowned var rootNavigator: RootNavigator!
     
     private lazy var whitelistDomainsUpdates: CurrentValueSubject<[String], Never> = {

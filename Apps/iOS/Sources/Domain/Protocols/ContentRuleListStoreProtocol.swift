@@ -1,13 +1,15 @@
 import WebKit
 
 protocol ContentRuleListStoreProtocol {
-    func lookUpContentRuleList(forIdentifier identifier: Identifier) async throws -> WKContentRuleList?
-    func compileContentRuleList(forIdentifier identifier: Identifier, encodedContentRuleList: String) async throws -> WKContentRuleList?
-    func removeContentRuleList(forIdentifier identifier: Identifier) async throws
+    func lookUpContentRuleList(forIdentifier identifier: WKContentRuleListIdentifier) async throws -> WKContentRuleList?
+    func compileContentRuleList(forIdentifier identifier: WKContentRuleListIdentifier, encodedContentRuleList: String) async throws -> WKContentRuleList?
+    func removeContentRuleList(forIdentifier identifier: WKContentRuleListIdentifier) async throws
 }
 
 extension WKContentRuleListStore: ContentRuleListStoreProtocol {
-    func lookUpContentRuleList(forIdentifier identifier: Identifier) async throws -> WKContentRuleList? {
+    func lookUpContentRuleList(
+        forIdentifier identifier: WKContentRuleListIdentifier
+    ) async throws -> WKContentRuleList? {
         return try await withCheckedThrowingContinuation { continuation in
             self.lookUpContentRuleList(
                 forIdentifier: identifier.value
@@ -22,7 +24,7 @@ extension WKContentRuleListStore: ContentRuleListStoreProtocol {
     }
     
     func compileContentRuleList(
-        forIdentifier identifier: Identifier,
+        forIdentifier identifier: WKContentRuleListIdentifier,
         encodedContentRuleList: String
     ) async throws -> WKContentRuleList? {
         return try await withCheckedThrowingContinuation { continuation in
@@ -39,7 +41,9 @@ extension WKContentRuleListStore: ContentRuleListStoreProtocol {
         }
     }
     
-    func removeContentRuleList(forIdentifier identifier: Identifier) async throws {
+    func removeContentRuleList(
+        forIdentifier identifier: WKContentRuleListIdentifier
+    ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             self.removeContentRuleList(
                 forIdentifier: identifier.value

@@ -1,7 +1,7 @@
 import SwiftUI
 import Combine
 
-class WhitelistDomainsListViewModel: ObservableObject {
+final class WhitelistDomainsListViewModel: ObservableObject {
     // MARK: - Dependencies
     private var manager: WhitelistDomainsManager
     private let rootNavigator: RootNavigator

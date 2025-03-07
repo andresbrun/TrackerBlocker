@@ -3,6 +3,12 @@ import UIKit
 struct Constants {
     struct URL {
         static let DefaultSearchEngine = "https://www.duckduckgo.com"
+        static let TDS = "https://staticcdn.duckduckgo.com/trackerblocking/v2.1/tds.json"
+    }
+    
+    struct Key {
+        static let Identifier = "LastRuleListIdentifier"
+        static let Etag = "ETag"
     }
 }
 

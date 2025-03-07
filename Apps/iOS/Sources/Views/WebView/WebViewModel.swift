@@ -14,7 +14,7 @@ enum WebViewState {
     case error(WebViewError)
 }
 
-class WebViewModel: NSObject {
+final class WebViewModel: NSObject {
     // MARK: - Dependencies
     private let whitelistDomainsManager: WhitelistDomainsManager
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
