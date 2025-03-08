@@ -4,7 +4,37 @@ import TrackerRadarKit
 import os
 import Foundation
 
+/// A manager class responsible for handling content blocking rules for WKWebKit.
+///
+/// The `WKContentRuleListManager` manages the lifecycle of content blocking rules, including:
+/// - Loading and caching of Tracker Definition Set (TDS) data
+/// - Compiling WebKit content blocking rules
+/// - Managing whitelist domains
+/// - Handling rule updates and state changes
+///
+/// ## Overview
+/// The manager provides functionality to:
+/// - Load existing rule lists from cache
+/// - Download and compile new TDS files
+/// - Handle whitelist domain updates
+/// - Manage rule compilation and state updates
+///
+/// ## Example Usage
+/// ```swift
+/// let manager = WKContentRuleListManager(...)
+/// manager.onInit()
+/// ```
+///
+/// ## Error Handling
+/// Errors are tracked and logged for:
+/// - Rule list compilation failures
+/// - TDS download issues
+/// - JSON encoding/decoding problems
+/// - Cache lookup errors
 final class WKContentRuleListManager {
+    private let logger = Logger.default
+    
+    // MARK: - Dependencies
     private let userDefaults: UserDefaultsProtocol
     private let ruleListStore: ContentRuleListStoreProtocol
     private let tdsAPI: TrackerDataSetAPI
@@ -13,11 +43,11 @@ final class WKContentRuleListManager {
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     private let analyticsServices: EventTracking
     
+    // MARK: - State
     private var cancellables = Set<AnyCancellable>()
     private var compilationTask: Task<Void, Never>?
     
-    private let logger = Logger.default
-    
+    // MARK: - Accessors
     private var lastIdentifier: WKContentRuleListIdentifier? {
         get {
             guard let identifierData = userDefaults.data(forKey: Constants.Key.Identifier) else { return nil }
@@ -42,6 +72,7 @@ final class WKContentRuleListManager {
         }
     }
     
+    // MARK: - Public
     init(
         userDefaults: UserDefaultsProtocol,
         ruleListStore: ContentRuleListStoreProtocol,
@@ -74,6 +105,7 @@ final class WKContentRuleListManager {
         }
     }
     
+    // MARK: - Private
     private func loadCurrentRuleListOrCompileWithCachedTDS() async {
         if let identifier = lastIdentifier {
             await retrieveCachedRuleList(identifier: identifier)
