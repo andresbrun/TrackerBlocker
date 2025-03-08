@@ -27,6 +27,6 @@ final class FeatureStore {
     }
     
     func isFeatureEnabled(_ feature: FeatureFlag) -> Bool {
-        return provider.isFeatureEnabled(feature)
+        provider.isFeatureEnabled(feature)
     }
 }

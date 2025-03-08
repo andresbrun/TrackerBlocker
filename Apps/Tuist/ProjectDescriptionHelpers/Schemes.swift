@@ -8,17 +8,14 @@ public let schemes: [Scheme] = [
         configArchive: .alphaDebug,
         testableTargets: [
             .unit,
-//            .integration,
-//            .screenshot
+            .integration
         ]
     ),
     .create(
         name: "iOS β",
         configRunAndTest: .betaDebug,
         configArchive: .betaRelease,
-        testableTargets: [
-            // .endToEnd
-        ]
+        testableTargets: []
     ),
     .create(
         name: "iOS AppStore",

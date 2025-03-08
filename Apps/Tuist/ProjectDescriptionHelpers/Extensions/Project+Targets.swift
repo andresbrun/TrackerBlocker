@@ -54,9 +54,7 @@ public extension Target {
             deploymentTargets: iOSDeploymentTargets,
             infoPlist: .default,
             sources: .sourceFilesList(globs: sources.map { .glob($0) }),
-            resources: [
-//                .glob(pattern: "Tests/Shared/Common/Resources/**/*.{png,jpg,jpeg}")
-            ],
+            resources: [],
             dependencies: dependencies,
             settings: .settings(
                 base: additionalSettings,
@@ -64,25 +62,4 @@ public extension Target {
             )
         )
     }
-    
-//    static func createTestFramework(
-//        name: String,
-//        sources: SourceFilesList? = nil,
-//        resources: ResourceFileElements? = nil,
-//        scripts: [ProjectDescription.TargetScript] = [],
-//        dependencies: [TargetDependency]
-//    ) -> Self {
-//        .target(
-//            name: "Duck\(name)",
-//            destinations: .iOS,
-//            product: .framework,
-//            bundleId: "$(PRODUCT_BUNDLE_IDENTIFIER_BASE).Duck\(name)",
-//            deploymentTargets: iOSDeploymentTargets,
-//            infoPlist: "iOS/Tests/Frameworks/Duck\(name)/Info.plist",
-//            sources: sources,
-//            resources: resources,
-//            scripts: scripts,
-//            dependencies: dependencies
-//        )
-//    }
 }

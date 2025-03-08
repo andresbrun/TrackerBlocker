@@ -2,17 +2,8 @@ import Foundation
 import ProjectDescription
 
 public extension TestableTarget {
-    static var integration: Self {
-        .testableTarget(target: "Integration", parallelization: .disabled)
-    }
     static var unit: Self {
         .testableTarget(target: "Unit", parallelization: .disabled)
-    }
-    static var screenshot: Self {
-        .testableTarget(target: "Screenshot", parallelization: .disabled)
-    }
-    static var endToEnd: Self {
-        .testableTarget(target: "End-to-end", parallelization: .disabled)
     }
 }
 
@@ -30,8 +21,7 @@ public extension Scheme {
                 testableTargets,
                 arguments: .arguments(
                     environmentVariables: [
-                        "RUNNING_TESTS": "1",
-                        "SNAPSHOT_ARTIFACTS": "/tmp/__SnapshotArtifacts__"
+                        "RUNNING_TESTS": "1"
                     ]
                 ),
                 configuration: ConfigurationName(stringLiteral: configRunAndTest.rawValue),
