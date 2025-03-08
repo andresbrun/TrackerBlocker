@@ -6,7 +6,7 @@ protocol TDSFileStorageCache {
     func getCachedData() -> Data
 } 
 
-class DefaultTDSFileStorageCache: TDSFileStorageCache {
+final class DefaultTDSFileStorageCache: TDSFileStorageCache {
     private let fileManager = FileManager.default
     private let bundledTDSFileName = "tds_20250301.json"
     private let tdsCacheFileName = "tds_cached.json"

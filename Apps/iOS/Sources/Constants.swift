@@ -10,6 +10,13 @@ struct Constants {
         static let Identifier = "LastRuleListIdentifier"
         static let Etag = "ETag"
     }
+    
+    struct HTTP {
+        struct Header {
+            static let IfNoneMatch = "If-None-Match"
+            static let ETag = "ETag"
+        }
+    }
 }
 
 struct Dimensions {

@@ -4,13 +4,17 @@ protocol TrackerDataSetAPI {
     func downloadLatestTDS(withETag: String?) async throws -> (data: Data?, etag: String?)
 } 
 
-class DefaultTrackerDataSetAPI: TrackerDataSetAPI {
+final class DefaultTrackerDataSetAPI: TrackerDataSetAPI {
     
-    // TODO: Review
-    func downloadLatestTDS(withETag: String?) async throws -> (data: Data?, etag: String?) {
+    func downloadLatestTDS(
+        withETag: String?
+    ) async throws -> (data: Data?, etag: String?) {
         var request = URLRequest(url: URL(string: Constants.URL.TDS)!)
         if let etag = withETag {
-            request.addValue(etag, forHTTPHeaderField: "If-None-Match")
+            request.addValue(
+                etag,
+                forHTTPHeaderField: Constants.HTTP.Header.IfNoneMatch
+            )
         }
         
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -20,7 +24,9 @@ class DefaultTrackerDataSetAPI: TrackerDataSetAPI {
         
         switch httpResponse.statusCode {
         case 200:
-            let newETag = httpResponse.value(forHTTPHeaderField: "ETag")
+            let newETag = httpResponse.value(
+                forHTTPHeaderField: Constants.HTTP.Header.ETag
+            )
             return (data, newETag)
         default:
             return (nil, nil)
