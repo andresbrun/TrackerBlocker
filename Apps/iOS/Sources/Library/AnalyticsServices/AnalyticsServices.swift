@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-protocol EventTracking {
+protocol AnalyticsServices {
     func trackEvent(_ event: AnalyticsEvent)
 }
 
@@ -72,7 +72,7 @@ enum AnalyticsEvent {
     }
 }
 
-class AnalyticsServices: EventTracking {
+class DefaultAnalyticsServices: AnalyticsServices {
     private let logger = Logger.default
     
     func trackEvent(_ event: AnalyticsEvent) {

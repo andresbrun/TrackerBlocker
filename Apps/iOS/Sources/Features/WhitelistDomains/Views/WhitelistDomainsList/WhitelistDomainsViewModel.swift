@@ -5,7 +5,7 @@ final class WhitelistDomainsListViewModel: ObservableObject {
     // MARK: - Dependencies
     private var manager: WhitelistDomainsManager
     private let rootNavigator: RootNavigator
-    private let analyticsServices: EventTracking
+    private let analyticsServices: AnalyticsServices
     
     // MARK: - State
     private var cancellables = Set<AnyCancellable>()
@@ -22,7 +22,7 @@ final class WhitelistDomainsListViewModel: ObservableObject {
         manager: WhitelistDomainsManager,
         rootNavigator: RootNavigator,
         currentDomain: String?,
-        analyticsServices: EventTracking
+        analyticsServices: AnalyticsServices
     ) {
         self.manager = manager
         self.rootNavigator = rootNavigator

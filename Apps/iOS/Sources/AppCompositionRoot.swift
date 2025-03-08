@@ -15,7 +15,7 @@ final class AppCompositionRoot {
     }()
     
     private lazy var analyticsServices: AnalyticsServices = {
-        AnalyticsServices()
+        DefaultAnalyticsServices()
     }()
     
     lazy var featureStore: FeatureStore = {

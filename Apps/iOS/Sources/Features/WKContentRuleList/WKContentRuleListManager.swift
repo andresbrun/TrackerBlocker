@@ -41,7 +41,7 @@ final class WKContentRuleListManager {
     private let fileCache: TDSFileStorageCache
     private let whitelistDomainsUpdates: CurrentValueSubject<[String], Never>
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
-    private let analyticsServices: EventTracking
+    private let analyticsServices: AnalyticsServices
     
     // MARK: - State
     private var cancellables = Set<AnyCancellable>()
@@ -80,7 +80,7 @@ final class WKContentRuleListManager {
         fileCache: TDSFileStorageCache,
         whitelistDomainsUpdates: CurrentValueSubject<[String], Never>,
         ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>,
-        analyticsServices: EventTracking
+        analyticsServices: AnalyticsServices
     ) {
         self.userDefaults = userDefaults
         self.ruleListStore = ruleListStore
