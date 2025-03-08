@@ -4,7 +4,7 @@ import WebKit
 
 @testable import iOS
 
-class WKContentRuleListManagerTests: XCTestCase {
+final class WKContentRuleListManagerTests: XCTestCase {
     private let domain1 = "examples.domain1"
     private let domain2 = "examples.domain2"
     private let domain3 = "examples.domain2"

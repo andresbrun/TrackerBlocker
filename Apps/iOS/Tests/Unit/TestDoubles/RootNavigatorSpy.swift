@@ -4,7 +4,10 @@ import UIKit
 
 final class RootNavigatorSpy: NSObject, RootNavigator {
     
-    func showWhiteListDomainsListView(currentDomain: String?) {}
+    var showWhiteListDomainsListViewReceivedInvocations: [String?] = []
+    func showWhiteListDomainsListView(currentDomain: String?) {
+        showWhiteListDomainsListViewReceivedInvocations.append(currentDomain)
+    }
     func initializeNavigation(in window: UIWindow) {}
     
     var presentAlertReceivedInvocations: [(title: String, description: String)] = []

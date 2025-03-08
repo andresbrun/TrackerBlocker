@@ -2,12 +2,13 @@ import XCTest
 import Combine
 @testable import iOS
 
-class WhitelistDomainsListViewModelTests: XCTestCase {
-    var sut: WhitelistDomainsListViewModel!
-    var managerMock: WhitelistDomainsManagerMock!
-    var navigatorSpy: RootNavigatorSpy!
-    var analyticsServicesSpy: AnalyticsServicesSpy!
-    var cancellables: Set<AnyCancellable>!
+final class WhitelistDomainsListViewModelTests: XCTestCase {
+    private var managerMock: WhitelistDomainsManagerMock!
+    private var navigatorSpy: RootNavigatorSpy!
+    private var analyticsServicesSpy: AnalyticsServicesSpy!
+    private var cancellables: Set<AnyCancellable>!
+    
+    private var sut: WhitelistDomainsListViewModel!
 
     override func setUp() {
         super.setUp()
