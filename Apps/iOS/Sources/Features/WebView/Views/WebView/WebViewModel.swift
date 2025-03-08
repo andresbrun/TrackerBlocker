@@ -168,6 +168,12 @@ extension WebViewModel: WKNavigationDelegate {
         didFail navigation: WKNavigation!,
         withError error: any Error
     ) {
+        let nsError = error as NSError
+        // WebView navigation was canceled, which is expected when using goBack() or goForward()
+        if nsError.domain == NSURLErrorDomain && nsError.code == -999 {
+            return
+        }
+        
         Logger.default.error("WebView did fail navigation with error: \(error)")
         updateNavigationState(
             webView,
