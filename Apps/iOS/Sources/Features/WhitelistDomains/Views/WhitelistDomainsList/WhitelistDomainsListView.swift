@@ -42,7 +42,9 @@ struct WhitelistDomainsListView: View {
         }
     }
     
-    private func createItemView(with domain: String) -> some View {
+    private func createItemView(
+        with domain: String
+    ) -> some View {
         HStack(spacing: Dimensions.Spacing.Default) {
             Image(systemName: "globe")
             Text(domain)
@@ -51,7 +53,9 @@ struct WhitelistDomainsListView: View {
         .accessibilityElement(children: .combine)
     }
     
-    private func createCurrentItemView(with currentDomain: String) -> some View {
+    private func createCurrentItemView(
+        with currentDomain: String
+    ) -> some View {
         HStack(spacing: Dimensions.Spacing.Default) {
             viewModel.protectionsIcon
             Text(viewModel.protectionsText)
@@ -65,6 +69,7 @@ struct WhitelistDomainsListView: View {
                 .accessibilityLabel(IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityLabel)
                 .accessibilityHint(IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityHint)
         }
+        .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
     }
     
     private func createNewDomainItemView() -> some View {
