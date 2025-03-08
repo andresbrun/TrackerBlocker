@@ -6,19 +6,19 @@ class WhitelistDomainsListViewModelTests: XCTestCase {
     var sut: WhitelistDomainsListViewModel!
     var managerMock: WhitelistDomainsManagerMock!
     var navigatorSpy: RootNavigatorSpy!
-    var analyticsServicesMock: AnalyticsServicesMock!
+    var analyticsServicesSpy: AnalyticsServicesSpy!
     var cancellables: Set<AnyCancellable>!
 
     override func setUp() {
         super.setUp()
-        analyticsServicesMock = AnalyticsServicesMock()
+        analyticsServicesSpy = AnalyticsServicesSpy()
         managerMock = WhitelistDomainsManagerMock()
         navigatorSpy = RootNavigatorSpy()
         sut = WhitelistDomainsListViewModel(
             manager: managerMock,
             rootNavigator: navigatorSpy,
             currentDomain: "previous.com",
-            analyticsServices: analyticsServicesMock
+            analyticsServices: analyticsServicesSpy
         )
         cancellables = []
     }

@@ -1,6 +1,6 @@
 @testable import iOS
 
-final class AnalyticsServicesMock: AnalyticsServices {
+final class AnalyticsServicesSpy: AnalyticsServices {
     var trackedEvents: [AnalyticsEvent] = []
     
     func trackEvent(_ event: AnalyticsEvent) {
