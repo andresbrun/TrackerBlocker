@@ -2,9 +2,10 @@ import WebKit
 
 @testable import iOS
 
-class MockContentRuleListStore: ContentRuleListStoreProtocol {
+final class ContentRuleListStoreMock: ContentRuleListStoreProtocol {
     var mockCompilationSuccess: Bool = false
     var mockLookUpSuccess: Bool = false
+    var mockCompilationTimeDelay: Bool = false
     
     func lookUpContentRuleList(
         forIdentifier identifier: WKContentRuleListIdentifier
@@ -21,6 +22,9 @@ class MockContentRuleListStore: ContentRuleListStoreProtocol {
         encodedContentRuleList: String
     ) async throws -> WKContentRuleList? {
         if mockCompilationSuccess {
+            if mockCompilationTimeDelay {
+                try await Task.sleep(for: .milliseconds(100))
+            }
             return await WKContentRuleList()
         } else {
             return nil

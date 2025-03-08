@@ -2,7 +2,7 @@ import Foundation
 
 @testable import iOS
 
-class MockTrackerDataSetAPI: TrackerDataSetAPI {
+final class TrackerDataSetAPIMock: TrackerDataSetAPI {
     var shouldFailDownload = false
     var shouldReturnNewEtag = true
     

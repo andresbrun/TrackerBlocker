@@ -9,14 +9,15 @@ class WKContentRuleListManagerTests: XCTestCase {
     private let domain2 = "examples.domain2"
     private let domain3 = "examples.domain2"
     
-    private var userDefaults: MockUserDefaults!
-    private var ruleListStore: MockContentRuleListStore!
-    private var tdsAPI: MockTrackerDataSetAPI!
-    private var fileCache: MockTDSFileStorageCache!
+    private var userDefaultsMock: UserDefaultsMock!
+    private var ruleListStoreMock: ContentRuleListStoreMock!
+    private var tdsAPIMock: TrackerDataSetAPIMock!
+    private var fileCacheMock: TDSFileStorageCacheMock!
     private var whitelistDomainsUpdates: CurrentValueSubject<[String], Never>!
     private var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>!
-    private var analyticsServices: MockAnalyticsServices!
-    private var manager: WKContentRuleListManager!
+    private var analyticsServices: AnalyticsServicesMock!
+    
+    private var sut: WKContentRuleListManager!
     
     override func setUp() {
         super.setUp()
@@ -28,7 +29,7 @@ class WKContentRuleListManagerTests: XCTestCase {
         arrangeForNoRulesCachedAndTDSNewETag()
         
         // ACT
-        manager.onInit()
+        sut.onInit()
         
         // ASSERT
         assertRuleListUpdates(expected: [.initialLoad, .newTDS])
@@ -39,7 +40,7 @@ class WKContentRuleListManagerTests: XCTestCase {
         arrangeForCachedRulesAndNoNewEtag()
         
         // ACT
-        manager.onInit()
+        sut.onInit()
         
         // ASSERT
         assertRuleListUpdates(expected: [.initialLoad])
@@ -50,7 +51,7 @@ class WKContentRuleListManagerTests: XCTestCase {
         arrangeForOrphanIdentifierAndNoNewETag()
         
         // ACT
-        manager.onInit()
+        sut.onInit()
         
         // ASSERT
         assertRuleListUpdates(expected: [.initialLoad])
@@ -95,57 +96,58 @@ class WKContentRuleListManagerTests: XCTestCase {
 
 extension WKContentRuleListManagerTests {
     private func resetMocks() {
-        userDefaults = MockUserDefaults()
-        ruleListStore = MockContentRuleListStore()
-        tdsAPI = MockTrackerDataSetAPI()
-        fileCache = MockTDSFileStorageCache()
+        userDefaultsMock = UserDefaultsMock()
+        ruleListStoreMock = ContentRuleListStoreMock()
+        tdsAPIMock = TrackerDataSetAPIMock()
+        fileCacheMock = TDSFileStorageCacheMock()
         whitelistDomainsUpdates = CurrentValueSubject<[String], Never>([])
         ruleListStateUpdates = CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
-        analyticsServices = MockAnalyticsServices()
-        manager = createSut()
+        analyticsServices = AnalyticsServicesMock()
+        sut = createSut()
     }
     
     // MARK: - ARRANGE
     private func arrangeForNoRulesCachedAndTDSNewETag() {
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
+        ruleListStoreMock.mockCompilationSuccess = true
+        tdsAPIMock.shouldFailDownload = false
     }
 
     private func arrangeForCachedRulesAndNoNewEtag() {
-        userDefaults.setValue(
+        userDefaultsMock.setValue(
             "existing_etag",
             forKey: Constants.Key.Etag
         )
-        userDefaults.setValue(
+        userDefaultsMock.setValue(
             try! JSONEncoder().encode(WKContentRuleListIdentifier(etag: "existing_etag", domains: [])),
             forKey: Constants.Key.Identifier
         )
-        tdsAPI.shouldReturnNewEtag = false
-        tdsAPI.shouldFailDownload = false
-        ruleListStore.mockCompilationSuccess = true
-        ruleListStore.mockLookUpSuccess = true
+        tdsAPIMock.shouldReturnNewEtag = false
+        tdsAPIMock.shouldFailDownload = false
+        ruleListStoreMock.mockCompilationSuccess = true
+        ruleListStoreMock.mockLookUpSuccess = true
     }
 
     private func arrangeForOrphanIdentifierAndNoNewETag() {
-        userDefaults.setValue(
+        userDefaultsMock.setValue(
             "prev_existing_etag",
             forKey: Constants.Key.Etag
         )
-        userDefaults.setValue(
+        userDefaultsMock.setValue(
             try! JSONEncoder().encode(WKContentRuleListIdentifier(etag: "existing_etag", domains: [])),
             forKey: Constants.Key.Identifier
         )
-        tdsAPI.shouldReturnNewEtag = false
-        tdsAPI.shouldFailDownload = false
-        ruleListStore.mockCompilationSuccess = true
-        ruleListStore.mockLookUpSuccess = false
+        tdsAPIMock.shouldReturnNewEtag = false
+        tdsAPIMock.shouldFailDownload = false
+        ruleListStoreMock.mockCompilationSuccess = true
+        ruleListStoreMock.mockLookUpSuccess = false
     }
 
     private func arrangeForWhiteListDomainsUpdates(initialDomain: String) {
-        ruleListStore.mockCompilationSuccess = true
-        tdsAPI.shouldFailDownload = false
+        ruleListStoreMock.mockCompilationSuccess = true
+        ruleListStoreMock.mockCompilationTimeDelay = true
+        tdsAPIMock.shouldFailDownload = false
         whitelistDomainsUpdates.send([initialDomain])
-        manager.onInit()
+        sut.onInit()
         assertRuleListUpdates(expected: [.initialLoad, .newTDS])
     }
 
@@ -154,12 +156,14 @@ extension WKContentRuleListManagerTests {
         let expectation = XCTestExpectation(description: "Wait for no ruleListStateUpdates")
         expectation.isInverted = true
         
+        // As it is a CurrentValueSubject we are not
+        // interested on the previous value
         let cancellable = ruleListStateUpdates.dropFirst().sink { update in
             guard update != nil else { return }
             expectation.fulfill()
         }
         
-        wait(for: [expectation], timeout: 1.0)
+        wait(for: [expectation], timeout: 3.0)
         
         cancellable.cancel()
     }
@@ -191,10 +195,10 @@ extension WKContentRuleListManagerTests {
     // MARK: - HELPERS
     private func createSut() -> WKContentRuleListManager {
         WKContentRuleListManager(
-            userDefaults: userDefaults,
-            ruleListStore: ruleListStore,
-            tdsAPI: tdsAPI,
-            fileCache: fileCache,
+            userDefaults: userDefaultsMock,
+            ruleListStore: ruleListStoreMock,
+            tdsAPI: tdsAPIMock,
+            fileCache: fileCacheMock,
             whitelistDomainsUpdates: whitelistDomainsUpdates,
             ruleListStateUpdates: ruleListStateUpdates,
             analyticsServices: analyticsServices

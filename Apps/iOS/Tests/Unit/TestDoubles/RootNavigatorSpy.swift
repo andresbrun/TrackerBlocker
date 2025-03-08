@@ -2,16 +2,14 @@ import UIKit
 
 @testable import iOS
 
-class MockRootNavigator: NSObject, RootNavigator {
-    var alertTitle: String?
-    var alertDescription: String?
+final class RootNavigatorSpy: NSObject, RootNavigator {
     
     func showWhiteListDomainsListView(currentDomain: String?) {}
     func initializeNavigation(in window: UIWindow) {}
     
+    var presentAlertReceivedInvocations: [(title: String, description: String)] = []
     func presentAlert(title: String, description: String) {
-        alertTitle = title
-        alertDescription = description
+        presentAlertReceivedInvocations.append((title: title, description: description))
     }
     
     func dismissLastPresentedViewController() {}

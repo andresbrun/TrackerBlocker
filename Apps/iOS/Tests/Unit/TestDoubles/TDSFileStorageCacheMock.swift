@@ -2,7 +2,7 @@ import Foundation
 
 @testable import iOS
 
-class MockTDSFileStorageCache: TDSFileStorageCache {
+final class TDSFileStorageCacheMock: TDSFileStorageCache {
     var savedInvocation: (Data, String)?
     
     func save(_ data: Data, forETag etag: String) {

@@ -2,7 +2,7 @@ import Combine
 
 @testable import iOS
 
-class MockWhitelistDomainsManager: WhitelistDomainsManager {
+final class WhitelistDomainsManagerMock: WhitelistDomainsManager {
     var updates = CurrentValueSubject<[String], Never>([])
     
     func getAll() -> [String] {

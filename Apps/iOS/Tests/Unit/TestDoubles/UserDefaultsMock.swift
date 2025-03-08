@@ -2,7 +2,7 @@ import Foundation
 
 @testable import iOS
 
-class MockUserDefaults: UserDefaultsProtocol {
+final class UserDefaultsMock: UserDefaultsProtocol {
     private var storage = [String: Any]()
     
     func string(forKey defaultName: String) -> String? {
