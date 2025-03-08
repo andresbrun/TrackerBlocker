@@ -6,7 +6,7 @@ class MockRootNavigator: NSObject, RootNavigator {
     var alertTitle: String?
     var alertDescription: String?
     
-    func showWhiteListDomainsListView() {}
+    func showWhiteListDomainsListView(currentDomain: String?) {}
     func initializeNavigation(in window: UIWindow) {}
     
     func presentAlert(title: String, description: String) {

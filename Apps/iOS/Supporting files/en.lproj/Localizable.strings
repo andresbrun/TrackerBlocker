@@ -4,7 +4,7 @@
 "whitelistdomainsview.alert.duplicated_domain.title" = "Duplicated Domain";
 "whitelistdomainsview.alert.duplicated_domain.description" = "The domain '%1$@' is already in the list";
 
-"whitelistdomainsview.navigation_bar.title" = "Whitelist Domains";
+"whitelistdomainsview.navigation_bar.title" = "Protections";
 
 "webviewcontroller.address_textfield.placeholder" = "Search or enter address";
 "webviewcontroller.address_textfield.accessibility_label" = "Address Field";
@@ -30,10 +30,15 @@
 "webviewcontroller.error.generic.title" = "TrackerBlocker MVP can't load this page.";
 "webviewcontroller.error.generic.description" = "A server with the specified hostname could not be found";
 
-"whitelistdomainsview.section.current_website" = "Current Website";
-"whitelistdomainsview.section.all_websites" = "All Websites";
+"whitelistdomainsview.section.current_website" = "Current Domain";
+"whitelistdomainsview.section.all_websites" = "Unprotected Domains";
 
 "whitelistdomainsview.new_domain_field.accessibility_label" = "New Domain Field";
 "whitelistdomainsview.new_domain_field.accessibility_hint" = "Enter a new domain to whitelist";
 "whitelistdomainsview.close_button.accessibility_label" = "Close";
 "whitelistdomainsview.close_button.accessibility_hint" = "Close the whitelist domains view";
+
+"whitelistdomainsview.new_domain_field.placeholder" = "Enter new domain";
+
+"whitelistdomainsview.protections.enabled" = "Protections **enabled** for this site";
+"whitelistdomainsview.protections.disabled" = "Protections **disabled** for this site";

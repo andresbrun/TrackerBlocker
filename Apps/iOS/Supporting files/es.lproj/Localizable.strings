@@ -4,7 +4,7 @@
 "whitelistdomainsview.alert.duplicated_domain.title" = "Dominio Duplicado";
 "whitelistdomainsview.alert.duplicated_domain.description" = "El dominio '%1$@' ya está en la lista";
 
-"whitelistdomainsview.navigation_bar.title" = "Dominios Permitidos";
+"whitelistdomainsview.navigation_bar.title" = "Privacidad";
 
 "webviewcontroller.address_textfield.placeholder" = "Busca o introduce una dirección";
 "webviewcontroller.address_textfield.accessibility_label" = "Campo de dirección";
@@ -30,10 +30,14 @@
 "webviewcontroller.error.generic.title" = "TrackerBlocker MVP no puede cargar esta página.";
 "webviewcontroller.error.generic.description" = "No se pudo encontrar un servidor con el nombre de host especificado";
 
-"whitelistdomainsview.section.current_website" = "Sitio Web Actual";
-"whitelistdomainsview.section.all_websites" = "Todos los Sitios Web";
+"whitelistdomainsview.section.current_website" = "Dominio Actual";
+"whitelistdomainsview.section.all_websites" = "Dominios sin protección";
 
 "whitelistdomainsview.new_domain_field.accessibility_label" = "Campo de nuevo dominio";
 "whitelistdomainsview.new_domain_field.accessibility_hint" = "Introduce un nuevo dominio para permitirlo";
 "whitelistdomainsview.close_button.accessibility_label" = "Cerrar";
 "whitelistdomainsview.close_button.accessibility_hint" = "Cerrar la vista de dominios permitidos";
+
+"whitelistdomainsview.new_domain_field.placeholder" = "Introduce un nuevo dominio";
+"whitelistdomainsview.protections.enabled" = "Protecciones **habilitadas** para este sitio";
+"whitelistdomainsview.protections.disabled" = "Protecciones **habilitadas** para este sitio";

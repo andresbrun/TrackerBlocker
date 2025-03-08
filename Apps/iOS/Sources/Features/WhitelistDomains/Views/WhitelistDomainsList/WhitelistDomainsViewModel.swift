@@ -5,33 +5,33 @@ final class WhitelistDomainsListViewModel: ObservableObject {
     // MARK: - Dependencies
     private var manager: WhitelistDomainsManager
     private let rootNavigator: RootNavigator
-    private let analyticsServices: AnalyticsServices
+    private let analyticsServices: EventTracking
     
     // MARK: - State
     private var cancellables = Set<AnyCancellable>()
     @Published var domains: [String] = [] {
         didSet {
             guard let currentDomain else { return }
-            isCurrentDomainWhitelisted = domains.contains(currentDomain)
+            isCurrentDomainProtected = !domains.contains(currentDomain)
         }
     }
     @Published var currentDomain: String?
-    @Published var isCurrentDomainWhitelisted: Bool
+    @Published var isCurrentDomainProtected: Bool
     
     init(
         manager: WhitelistDomainsManager,
         rootNavigator: RootNavigator,
         currentDomain: String?,
-        analyticsServices: AnalyticsServices
+        analyticsServices: EventTracking
     ) {
         self.manager = manager
         self.rootNavigator = rootNavigator
         self.currentDomain = currentDomain
         self.analyticsServices = analyticsServices
         if let currentDomain {
-            self.isCurrentDomainWhitelisted = manager.contains(currentDomain)
+            self.isCurrentDomainProtected = !manager.contains(currentDomain)
         } else {
-            self.isCurrentDomainWhitelisted = false
+            self.isCurrentDomainProtected = true
         }
         subscribeToDomainsListUpdates()
     }
@@ -48,6 +48,20 @@ final class WhitelistDomainsListViewModel: ObservableObject {
     var allWebsitesTitle: String {
         IOSStrings.Whitelistdomainsview.Section.allWebsites
     } 
+    
+    var protectionsText: AttributedString {
+        let markdown = isCurrentDomainProtected ? IOSStrings.Whitelistdomainsview.Protections.enabled : IOSStrings.Whitelistdomainsview.Protections.disabled
+        // Force try because is a localizable string
+        return try! AttributedString(markdown: markdown)
+    }
+    
+    var protectionsIcon: Image {
+        isCurrentDomainProtected ? IOSAsset.Assets.icProtectionEnabled.swiftUIImage : IOSAsset.Assets.icProtectionDisabled.swiftUIImage
+    }
+    
+    var createNewDomainPlaceholder: String {
+        IOSStrings.Whitelistdomainsview.NewDomainField.placeholder
+    }
     
     func addDomain(_ domain: String) -> Bool {
         guard let host = normalizedDomain(domain) else {
@@ -83,15 +97,15 @@ final class WhitelistDomainsListViewModel: ObservableObject {
         rootNavigator.dismissLastPresentedViewController()
     }
     
-    func toggleCurrentDomain(enable: Bool) {
+    func toggleCurrentDomain(enableProtection: Bool) {
         guard let currentDomain else { return }
         
-        if enable {
-            manager.add(currentDomain)
-        } else {
+        if enableProtection {
             manager.remove(currentDomain)
+        } else {
+            manager.add(currentDomain)
         }
-        analyticsServices.trackEvent(.whitelistCurrentDomainToggle(enable, currentDomain))
+        analyticsServices.trackEvent(.whitelistCurrentDomainToggle(!enableProtection, currentDomain))
     }
     
     // MARK: - Private

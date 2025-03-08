@@ -6,15 +6,19 @@ class WhitelistDomainsListViewModelTests: XCTestCase {
     var viewModel: WhitelistDomainsListViewModel!
     var mockManager: MockWhitelistDomainsManager!
     var mockNavigator: MockRootNavigator!
+    var mockAnalyticsServices: MockAnalyticsServices!
     var cancellables: Set<AnyCancellable>!
 
     override func setUp() {
         super.setUp()
+        mockAnalyticsServices = MockAnalyticsServices()
         mockManager = MockWhitelistDomainsManager()
         mockNavigator = MockRootNavigator()
         viewModel = WhitelistDomainsListViewModel(
             manager: mockManager,
-            rootNavigator: mockNavigator
+            rootNavigator: mockNavigator,
+            currentDomain: "previous.com",
+            analyticsServices: mockAnalyticsServices
         )
         cancellables = []
     }

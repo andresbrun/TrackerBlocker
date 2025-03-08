@@ -12,7 +12,8 @@ struct WhitelistDomainsListView: View {
                 if let currentDomain = viewModel.currentDomain {
                     Section {
                         createCurrentItemView(with: currentDomain)
-                    } header: {
+                    }
+                    header: {
                         Text(viewModel.currentWebsiteTitle)
                     }
                 }
@@ -27,7 +28,8 @@ struct WhitelistDomainsListView: View {
                         }
                     })
                     createNewDomainItemView()
-                } header: {
+                }
+                header: {
                     Text(viewModel.allWebsitesTitle)
                 }
             }
@@ -51,12 +53,14 @@ struct WhitelistDomainsListView: View {
     
     private func createCurrentItemView(with currentDomain: String) -> some View {
         HStack(spacing: Dimensions.Spacing.Default) {
-            Image(systemName: "globe")
-            Text(currentDomain)
+            viewModel.protectionsIcon
+            Text(viewModel.protectionsText)
+        
             Spacer()
-            Toggle("", isOn: $viewModel.isCurrentDomainWhitelisted)
-                .onChange(of: viewModel.isCurrentDomainWhitelisted) { old, new in
-                    viewModel.toggleCurrentDomain(enable: new)
+            Toggle("", isOn: $viewModel.isCurrentDomainProtected)
+                .frame(width: Dimensions.Size.ToggleWidth)
+                .onChange(of: viewModel.isCurrentDomainProtected) { _, enable in
+                    viewModel.toggleCurrentDomain(enableProtection: enable)
                 }
                 .accessibilityLabel(IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityLabel)
                 .accessibilityHint(IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityHint)
@@ -66,7 +70,7 @@ struct WhitelistDomainsListView: View {
     private func createNewDomainItemView() -> some View {
         HStack(spacing: Dimensions.Spacing.Default) {
             Image(systemName: "plus.circle")
-            TextField("Enter new domain", text: $newDomain)
+            TextField(viewModel.createNewDomainPlaceholder, text: $newDomain)
                 .keyboardType(.URL)
                 .autocapitalization(.none)
                 .onSubmit {

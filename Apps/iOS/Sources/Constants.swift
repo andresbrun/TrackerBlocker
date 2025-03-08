@@ -17,6 +17,7 @@ struct Dimensions {
         static let DefaultButtonHeight: CGFloat = 44
         static let ToolbarHeight: CGFloat = 44.0
         static let AddressBarHeight: CGFloat = 40.0
+        static let ToggleWidth: CGFloat = 60
     }
     
     struct Spacing {
