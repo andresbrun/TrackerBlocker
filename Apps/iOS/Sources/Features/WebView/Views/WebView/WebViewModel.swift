@@ -20,7 +20,7 @@ final class WebViewModel: NSObject {
     private let ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>
     private unowned let navigator: RootNavigator
     private let featureStore: FeatureStore
-    private let analyticsServices: DefaultAnalyticsServices
+    private let analyticsServices: AnalyticsServices
     
     // MARK: - State
     @Published var currentURL: URL?
@@ -45,7 +45,7 @@ final class WebViewModel: NSObject {
         ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never>,
         navigator: RootNavigator,
         featureStore: FeatureStore,
-        analyticsServices: DefaultAnalyticsServices
+        analyticsServices: AnalyticsServices
     ) {
         self.whitelistDomainsManager = whitelistDomainsManager
         self.ruleListStateUpdates = ruleListStateUpdates
