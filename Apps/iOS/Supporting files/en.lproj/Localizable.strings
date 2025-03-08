@@ -32,3 +32,8 @@
 
 "whitelistdomainsview.section.current_website" = "Current Website";
 "whitelistdomainsview.section.all_websites" = "All Websites";
+
+"whitelistdomainsview.new_domain_field.accessibility_label" = "New Domain Field";
+"whitelistdomainsview.new_domain_field.accessibility_hint" = "Enter a new domain to whitelist";
+"whitelistdomainsview.close_button.accessibility_label" = "Close";
+"whitelistdomainsview.close_button.accessibility_hint" = "Close the whitelist domains view";

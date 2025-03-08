@@ -32,3 +32,8 @@
 
 "whitelistdomainsview.section.current_website" = "Sitio Web Actual";
 "whitelistdomainsview.section.all_websites" = "Todos los Sitios Web";
+
+"whitelistdomainsview.new_domain_field.accessibility_label" = "Campo de nuevo dominio";
+"whitelistdomainsview.new_domain_field.accessibility_hint" = "Introduce un nuevo dominio para permitirlo";
+"whitelistdomainsview.close_button.accessibility_label" = "Cerrar";
+"whitelistdomainsview.close_button.accessibility_hint" = "Cerrar la vista de dominios permitidos";

@@ -46,6 +46,7 @@ struct WhitelistDomainsListView: View {
             Text(domain)
         }
         .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
+        .accessibilityElement(children: .combine)
     }
     
     private func createCurrentItemView(with currentDomain: String) -> some View {
@@ -57,6 +58,8 @@ struct WhitelistDomainsListView: View {
                 .onChange(of: viewModel.isCurrentDomainWhitelisted) { old, new in
                     viewModel.toggleCurrentDomain(enable: new)
                 }
+                .accessibilityLabel(IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityLabel)
+                .accessibilityHint(IOSStrings.Webviewcontroller.ToggleWhitelistDomainButton.accessibilityHint)
         }
     }
     
@@ -73,6 +76,9 @@ struct WhitelistDomainsListView: View {
                 }
         }
         .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(IOSStrings.Whitelistdomainsview.NewDomainField.accessibilityLabel)
+        .accessibilityHint(IOSStrings.Whitelistdomainsview.NewDomainField.accessibilityHint)
     }
     
     private func closeButton() -> some View {
@@ -82,6 +88,8 @@ struct WhitelistDomainsListView: View {
             Image(systemName: "xmark")
                 .foregroundColor(IOSAsset.Colors.textColor.swiftUIColor)
         }
+        .accessibilityLabel(IOSStrings.Whitelistdomainsview.CloseButton.accessibilityLabel)
+        .accessibilityHint(IOSStrings.Whitelistdomainsview.CloseButton.accessibilityHint)
     }
 
     // MARK: - Private
