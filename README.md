@@ -103,6 +103,9 @@ The functionality of WhitelistDomainsManager is so straightforward that it doesn
 - Implement drag gestures to go **back** (left swipe) and **forward** (right swipe).
 - Add pull-to-refresh support for refreshing the current web page.
 
+### Better Animations
+Implement better animations for the UI changes like adding/removing from the whitelist or progress bar transitions.
+
 ### Navigation from SwiftUI views
 For simplicity, we are using the visibleViewController to present alerts and dismiss itself, referring to WhitelistDomainsListView. Other alternatives are:
 - Passing the UIHostingController reference to the ViewModel.

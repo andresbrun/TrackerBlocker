@@ -25,6 +25,11 @@ These tests are designed to cover critical aspects of the application's function
 - **Expected Behavior:** The application should exhibit different behaviors based on the tracker functionality state.
 - **Result:** OK
 
+
+| Enhanced Protection Enabled | Enhanced Protection Disabled |
+|--------|------------|
+| ![Enhanced Protection On](images/cover_your_tracks_test_enchanced_protection_on.png) | ![Enhanced Protection Off](images/cover_your_tracks_test_enchanced_protection_off.png) |
+
 #### Tracker Detection via Proxyman
 - **Test Description:** Monitored network requests for tracker activity on the following websites using Proxyman:
   - **Youtube**
