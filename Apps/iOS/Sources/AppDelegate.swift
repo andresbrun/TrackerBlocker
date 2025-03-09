@@ -20,6 +20,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow(frame: UIScreen.main.bounds)
         
         rootNavigator.initializeNavigation(in: window!)
+        appCompositionRoot.initializeRulesManagerIfNeeded()
         
         window!.makeKeyAndVisible()
         

@@ -39,15 +39,6 @@ final class AppRootNavigator: NSObject, RootNavigator {
         )
         rootNavigationController!.setNavigationBarHidden(true, animated: false)
         window.rootViewController = rootNavigationController
-        
-        initializeRulesManagerIfNeeded()
-    }
-    
-    private func initializeRulesManagerIfNeeded() {
-        guard NSClassFromString("XCTestCase") == nil else { return }
-        guard appCompositionRoot.featureStore.isFeatureEnabled(.enhancedTrackingProtection) else { return }
-        
-        appCompositionRoot.wkContentRuleListManager.onInit()
     }
     
     func presentAlert(title: String, description: String) {

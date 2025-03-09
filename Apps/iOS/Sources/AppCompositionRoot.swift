@@ -6,48 +6,7 @@ import WebKit
 final class AppCompositionRoot {
     public unowned var rootNavigator: RootNavigator!
     
-    private lazy var whitelistDomainsUpdates: CurrentValueSubject<[String], Never> = {
-        CurrentValueSubject<[String], Never>([])
-    }()
-    
-    private lazy var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never> = {
-        CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
-    }()
-    
-    private lazy var analyticsServices: AnalyticsServices = {
-        DefaultAnalyticsServices()
-    }()
-    
-    lazy var featureStore: FeatureStore = {
-        FeatureStore(
-            provider: FakeFeatureProvider()
-        )
-    }()
-    
-    lazy var wkContentRuleListManager: WKContentRuleListManager = {
-        WKContentRuleListManager(
-            userDefaults: UserDefaults.standard,
-            ruleListStore: WKContentRuleListStore.default(),
-            tdsAPI: DefaultTrackerDataSetAPI(),
-            fileCache: DefaultTDSFileStorageCache(),
-            whitelistDomainsUpdates: whitelistDomainsUpdates,
-            ruleListStateUpdates: ruleListStateUpdates,
-            analyticsServices: analyticsServices
-        )
-    }()
-    
-    private lazy var whitelistDomainsManager: WhitelistDomainsManager = {
-        DefaultWhitelistDomainsManager(
-            whitelistDomainsUpdates: whitelistDomainsUpdates
-        )
-    }()
-    
-    private func createUserContentController() -> UserContentController {
-        UserContentController(
-            ruleListStateUpdates: ruleListStateUpdates
-        )
-    }
-    
+    // MARK: - Public
     func createWebViewController() -> WebViewController {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = createUserContentController()
@@ -80,6 +39,57 @@ final class AppCompositionRoot {
             rootView: WhitelistDomainsListView(
                 viewModel: viewModel
             )
+        )
+    }
+    
+    func initializeRulesManagerIfNeeded() {
+        guard NSClassFromString("XCTestCase") == nil else { return }
+        guard featureStore.isFeatureEnabled(.enhancedTrackingProtection) else { return }
+        
+        wkContentRuleListManager.onInit()
+    }
+    
+    // MARK: - Updates subjects
+    private lazy var whitelistDomainsUpdates: CurrentValueSubject<[String], Never> = {
+        CurrentValueSubject<[String], Never>([])
+    }()
+    
+    private lazy var ruleListStateUpdates: CurrentValueSubject<RuleListStateUpdates?, Never> = {
+        CurrentValueSubject<RuleListStateUpdates?, Never>(nil)
+    }()
+    
+    // MARK: - Dependencies
+    private lazy var analyticsServices: AnalyticsServices = {
+        DefaultAnalyticsServices()
+    }()
+    
+    private lazy var featureStore: FeatureStore = {
+        FeatureStore(
+            provider: FakeFeatureProvider()
+        )
+    }()
+    
+    private lazy var wkContentRuleListManager: WKContentRuleListManager = {
+        WKContentRuleListManager(
+            userDefaults: UserDefaults.standard,
+            ruleListStore: WKContentRuleListStore.default(),
+            tdsAPI: DefaultTrackerDataSetAPI(),
+            fileCache: DefaultTDSFileStorageCache(),
+            whitelistDomainsUpdates: whitelistDomainsUpdates,
+            ruleListStateUpdates: ruleListStateUpdates,
+            analyticsServices: analyticsServices
+        )
+    }()
+    
+    private lazy var whitelistDomainsManager: WhitelistDomainsManager = {
+        DefaultWhitelistDomainsManager(
+            whitelistDomainsUpdates: whitelistDomainsUpdates
+        )
+    }()
+    
+    private func createUserContentController() -> UserContentController {
+        UserContentController(
+            ruleListStateUpdates: ruleListStateUpdates
         )
     }
 }
