@@ -112,8 +112,8 @@ final class WhitelistDomainsListViewModel: ObservableObject {
     private func subscribeToDomainsListUpdates() {
         manager.updates
             .receive(on: DispatchQueue.main)
-            .sink { domains in
-                self.domains = domains
+            .sink { [weak self] domains in
+                self?.domains = domains
             }
             .store(in: &cancellables)
     }

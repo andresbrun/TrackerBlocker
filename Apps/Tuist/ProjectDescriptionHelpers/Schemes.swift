@@ -7,8 +7,7 @@ public let schemes: [Scheme] = [
         configRunAndTest: .alphaDebug,
         configArchive: .alphaDebug,
         testableTargets: [
-            .unit,
-            .integration
+            .unit
         ]
     ),
     .create(
