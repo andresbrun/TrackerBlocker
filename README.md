@@ -130,6 +130,7 @@ WKContentRuleListManager is doing too many thigs on the current implementation. 
 ### Testing
 - Some unit tests require necessary delays, which impact execution speed.
 - Implement some End-To-End tests for removing protections from the current page and adding new whitelisted domains.
+- Implement some screenshot tests for the UI of the WebViewController and the WhitelistDomainsListView.
 
 ## Tests
 - [reference](Apps/doc/TESTS.md)
