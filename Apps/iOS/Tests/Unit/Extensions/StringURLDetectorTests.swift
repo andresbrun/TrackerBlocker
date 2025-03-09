@@ -3,7 +3,7 @@ import XCTest
 
 class StringURLDetectorTests: XCTestCase {
 
-    func testExtractURLs_withValidURL() {
+    func testExtractURLsWithValidURL() {
         let string = "duckduckgo.com"
         let expectedURLs = [
             URL(string: "http://duckduckgo.com")!
@@ -14,21 +14,21 @@ class StringURLDetectorTests: XCTestCase {
         XCTAssertEqual(extractedURLs, expectedURLs, "The extracted URL should match the expected URL.")
     }
     
-    func testExtractURLs_withAWord() {
+    func testExtractURLsWithAWord() {
         let string = "Duck"
         let extractedURLs = string.extractURLs()
         
         XCTAssertTrue(extractedURLs.isEmpty, "The extracted URLs should be empty for a string with no URLs.")
     }
     
-    func testExtractURLs_withSentence() {
+    func testExtractURLsWithSentence() {
         let string = "How to bake a cake"
         let extractedURLs = string.extractURLs()
         
         XCTAssertTrue(extractedURLs.isEmpty, "The extracted URLs should be empty for a sentence with no URLs.")
     }
     
-    func testExtractURLs_withFullURL() {
+    func testExtractURLsWithFullURL() {
         let string = "https://www.youtube.com"
         let expectedURLs = [
             URL(string: "https://www.youtube.com")!
@@ -39,7 +39,7 @@ class StringURLDetectorTests: XCTestCase {
         XCTAssertEqual(extractedURLs, expectedURLs, "The extracted URLs should include the valid URL.")
     }
     
-    func testExtractURLs_withMalformedURLs() {
+    func testExtractURLsWithMalformedURLs() {
         let string = "http://example"
         let extractedURLs = string.extractURLs()
         let expectedURLs = [

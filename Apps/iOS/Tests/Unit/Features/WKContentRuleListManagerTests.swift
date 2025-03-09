@@ -163,7 +163,7 @@ extension WKContentRuleListManagerTests {
             expectation.fulfill()
         }
         
-        wait(for: [expectation], timeout: 3.0)
+        wait(for: [expectation], timeout: 0.5)
         
         cancellable.cancel()
     }

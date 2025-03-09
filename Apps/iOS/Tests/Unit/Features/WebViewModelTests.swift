@@ -47,7 +47,7 @@ final class WebViewModelTests: XCTestCase {
     }
 
     func testLoadDefaultPage() {
-        // Arrange
+        // ARRANGE
         let expectation = XCTestExpectation(description: "Callback should be called with load URL")
         sut.callbacksPublisher.sink { callback in
             if case .load(let url) = callback {
@@ -56,15 +56,15 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         sut.loadDefaultPage()
         
-        // Assert
+        // ASSERT
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testTryToLoadValidURL() {
-        // Arrange
+        // ARRANGE
         let validURLString = "https://example.com"
         let expectation = XCTestExpectation(description: "Callback should be called with load URL")
         sut.callbacksPublisher.sink { callback in
@@ -74,16 +74,16 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         let result = sut.tryToLoad(absoluteString: validURLString)
         
-        // Assert
+        // ASSERT
         XCTAssertTrue(result)
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testTryToLoadInvalidURLShouldSearchInstead() {
-        // Arrange
+        // ARRANGE
         let invalidURLString = "invalid url"
         let expectation = XCTestExpectation(description: "Callback should be called with search URL")
         sut.callbacksPublisher.sink { callback in
@@ -96,16 +96,16 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         let result = sut.tryToLoad(absoluteString: invalidURLString)
         
-        // Assert
+        // ASSERT
         XCTAssertTrue(result)
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testReloadCurrentPage() {
-        // Arrange
+        // ARRANGE
         let currentURL = URL(string: "https://example.com")!
         sut.currentURL = currentURL
         let expectation = XCTestExpectation(description: "Callback should be called with reload URL")
@@ -116,15 +116,15 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         sut.reloadCurrentPage()
         
-        // Assert
+        // ASSERT
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testGoBack() {
-        // Arrange
+        // ARRANGE
         let expectation = XCTestExpectation(description: "Callback should be called with goBack")
         sut.callbacksPublisher.sink { callback in
             if case .goBack = callback {
@@ -132,15 +132,15 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         sut.goBack()
         
-        // Assert
+        // ASSERT
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testGoForward() {
-        // Arrange
+        // ARRANGE
         let expectation = XCTestExpectation(description: "Callback should be called with goForward")
         sut.callbacksPublisher.sink { callback in
             if case .goForward = callback {
@@ -148,23 +148,23 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         sut.goForward()
         
-        // Assert
+        // ASSERT
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testShowWhiteListDomainsListView() {
-        // Act
+        // ACT
         sut.showWhiteListDomainsListView()
         
-        // Assert
+        // ASSERT
         XCTAssertFalse(navigatorSpy.showWhiteListDomainsListViewReceivedInvocations.isEmpty)
     }
 
     func testRuleListStateUpdatesReloadsCurrentWebsite() {
-        // Arrange
+        // ARRANGE
         let currentURL = URL(string: "https://example.com")!
         sut.currentURL = currentURL
         let expectation = XCTestExpectation(description: "Callback should be called with reload URL")
@@ -176,7 +176,7 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         ruleListStateUpdatesMock.send(
             RuleListStateUpdates(
                 ruleList: WKContentRuleList(),
@@ -184,12 +184,12 @@ final class WebViewModelTests: XCTestCase {
             )
         )
         
-        // Assert
+        // ASSERT
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testRuleListStateUpdatesDoesNotReloadForUnrelatedUpdates() {
-        // Arrange
+        // ARRANGE
         let currentURL = URL(string: "https://example.com")!
         sut.currentURL = currentURL
         let expectation = XCTestExpectation(description: "Callback should not be called")
@@ -201,7 +201,7 @@ final class WebViewModelTests: XCTestCase {
             }
         }.store(in: &cancellables)
         
-        // Act
+        // ACT
         ruleListStateUpdatesMock.send(
             RuleListStateUpdates(
                 ruleList: WKContentRuleList(),
@@ -209,7 +209,7 @@ final class WebViewModelTests: XCTestCase {
             )
         )
         
-        // Assert
+        // ASSERT
         wait(for: [expectation], timeout: 1.0)
     }
 } 

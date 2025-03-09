@@ -31,6 +31,7 @@ final class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
         }
     }
 
+    // MARK: - Public
     let updates: CurrentValueSubject<[String], Never>
     
     init(whitelistDomainsUpdates: CurrentValueSubject<[String], Never>) {
@@ -38,6 +39,20 @@ final class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
         loadDomains()
     }
 
+    func getAll() -> [String] {
+        Array(domains)
+    }
+
+    func add(_ domain: String) {
+        guard !domain.isEmpty else { return }
+        domains.insert(domain)
+    }
+
+    func remove(_ domain: String) {
+        domains.remove(domain)
+    }
+    
+    // MARK: - Private
     private func getFilePath() -> URL? {
         guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
             return nil
@@ -57,18 +72,5 @@ final class DefaultWhitelistDomainsManager: WhitelistDomainsManager {
         guard let filePath = getFilePath() else { return }
         let domainsString = domains.joined(separator: "\n")
         try? domainsString.write(to: filePath, atomically: true, encoding: .utf8)
-    }
-
-    func getAll() -> [String] {
-        Array(domains)
-    }
-
-    func add(_ domain: String) {
-        guard !domain.isEmpty else { return }
-        domains.insert(domain)
-    }
-
-    func remove(_ domain: String) {
-        domains.remove(domain)
     }
 }

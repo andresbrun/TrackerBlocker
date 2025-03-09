@@ -26,6 +26,10 @@ extension UIView {
         return containerView
     }
     
+    /// Wraps the view inside a container view with specified padding for each side
+    /// - Parameters:
+    ///   - all: horizontal and vertical padding
+    /// - Returns: A new container view with this view inside it
     func padding(
         all: CGFloat = 0
     ) -> UIView {

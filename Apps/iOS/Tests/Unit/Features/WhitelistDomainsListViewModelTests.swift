@@ -29,27 +29,27 @@ final class WhitelistDomainsListViewModelTests: XCTestCase {
     }
 
     func testAddDomainSuccessfully() {
-        // Arrange
+        // ARRANGE
         createSUT()
         
-        // Act
+        // ACT
         let domain = "example.com"
         let result = sut.addDomain(domain)
         
-        // Assert
+        // ASSERT
         XCTAssertTrue(result)
         XCTAssertTrue(managerMock.updates.value.contains(domain))
     }
 
     func testAddInvalidDomain() {
-        // Arrange
+        // ARRANGE
         createSUT()
         
-        // Act
+        // ACT
         let domain = "invalid domain"
         let result = sut.addDomain(domain)
         
-        // Assert
+        // ASSERT
         XCTAssertFalse(result)
         XCTAssertEqual(
             navigatorSpy.presentAlertReceivedInvocations.last?.title,
@@ -58,15 +58,15 @@ final class WhitelistDomainsListViewModelTests: XCTestCase {
     }
 
     func testAddDuplicateDomain() {
-        // Arrange
+        // ARRANGE
         let domain = "example.com"
         managerMock.add(domain)
         createSUT()
         
-        // Act
+        // ACT
         let result = sut.addDomain(domain)
         
-        // Assert
+        // ASSERT
         XCTAssertFalse(result)
         XCTAssertEqual(
             navigatorSpy.presentAlertReceivedInvocations.last?.title,
@@ -75,40 +75,40 @@ final class WhitelistDomainsListViewModelTests: XCTestCase {
     }
 
     func testRemoveDomainFromWhitelist() {
-        // Arrange
+        // ARRANGE
         let domain = "example.com"
         managerMock.add(domain)
         createSUT()
         
-        // Act
+        // ACT
         sut.removeDomain(at: IndexSet(integer: 0))
         
-        // Assert
+        // ASSERT
         XCTAssertFalse(managerMock.domains.contains(domain))
     }
 
     func testToggleCurrentDomainEnableProtection() {
-        // Arrange
+        // ARRANGE
         let domain = currentDomain
         createSUT()
         
-        // Act
+        // ACT
         sut.toggleCurrentDomain(enableProtection: true)
         
-        // Assert
+        // ASSERT
         XCTAssertFalse(managerMock.domains.contains(domain))
     }
 
     func testToggleCurrentDomainDisableProtection() {
-        // Arrange
+        // ARRANGE
         let domain = currentDomain
         managerMock.add(domain)
         createSUT()
         
-        // Act
+        // ACT
         sut.toggleCurrentDomain(enableProtection: false)
         
-        // Assert
+        // ASSERT
         XCTAssertTrue(sut.domains.contains(domain))
     }
 } 
