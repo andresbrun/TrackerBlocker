@@ -3,17 +3,22 @@ import Combine
 @testable import iOS
 
 final class WhitelistDomainsManagerMock: WhitelistDomainsManager {
+    var domains: Set<String> = [] {
+        didSet {
+            updates.send(Array(domains).sorted())
+        }
+    }
     var updates = CurrentValueSubject<[String], Never>([])
     
     func getAll() -> [String] {
-        updates.value
+        Array(domains).sorted()
     }
     
     func add(_ domain: String) {
-        updates.value.append(domain)
+        domains.insert(domain)
     }
     
     func remove(_ domain: String) {
-        updates.value.removeAll { $0 == domain }
+        domains.remove(domain)
     }
 } 

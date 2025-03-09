@@ -33,6 +33,7 @@ final class WhitelistDomainsListViewModel: ObservableObject {
         } else {
             self.isCurrentDomainProtected = true
         }
+        self.domains = manager.getAll()
         subscribeToDomainsListUpdates()
     }
     
@@ -51,7 +52,7 @@ final class WhitelistDomainsListViewModel: ObservableObject {
     
     var protectionsText: AttributedString {
         let markdown = isCurrentDomainProtected ? IOSStrings.Whitelistdomainsview.Protections.enabled : IOSStrings.Whitelistdomainsview.Protections.disabled
-        // Force try because is a localizable string
+        // Force try because it is a localizable string
         return try! AttributedString(markdown: markdown)
     }
     
@@ -67,24 +68,24 @@ final class WhitelistDomainsListViewModel: ObservableObject {
         IOSStrings.Whitelistdomainsview.NewDomainField.placeholder
     }
     
-    func addDomain(_ domain: String) -> Bool {
-        guard let host = normalizedDomain(domain) else {
+    func addDomain(_ rawDomain: String) -> Bool {
+        guard let domain = normalizedDomain(rawDomain) else {
             rootNavigator.presentAlert(
                 title: IOSStrings.Whitelistdomainsview.Alert.InvalidDomain.title,
-                description: IOSStrings.Whitelistdomainsview.Alert.InvalidDomain.description(domain)
+                description: IOSStrings.Whitelistdomainsview.Alert.InvalidDomain.description(rawDomain)
             )
             return false
         }
         
-        if domains.contains(host) {
+        if domains.contains(domain) {
             rootNavigator.presentAlert(
                 title: IOSStrings.Whitelistdomainsview.Alert.DuplicatedDomain.title,
-                description: IOSStrings.Whitelistdomainsview.Alert.DuplicatedDomain.description(domain)
+                description: IOSStrings.Whitelistdomainsview.Alert.DuplicatedDomain.description(rawDomain)
             )
             return false
         } else {
-            analyticsServices.trackEvent(.whitelistAddedDomain(host))
-            manager.add(host)
+            analyticsServices.trackEvent(.whitelistAddedDomain(domain))
+            manager.add(domain)
             return true
         }
     }
@@ -109,7 +110,9 @@ final class WhitelistDomainsListViewModel: ObservableObject {
         } else {
             manager.add(currentDomain)
         }
-        analyticsServices.trackEvent(.whitelistCurrentDomainToggle(!enableProtection, currentDomain))
+        analyticsServices.trackEvent(
+            .whitelistCurrentDomainToggle(!enableProtection, currentDomain)
+        )
     }
     
     // MARK: - Private
