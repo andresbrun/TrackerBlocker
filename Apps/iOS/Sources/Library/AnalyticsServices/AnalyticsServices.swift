@@ -72,6 +72,7 @@ enum AnalyticsEvent {
     }
 }
 
+// Since we don't have a real analytics service, we'll use the logger
 class DefaultAnalyticsServices: AnalyticsServices {
     private let logger = Logger.default
     

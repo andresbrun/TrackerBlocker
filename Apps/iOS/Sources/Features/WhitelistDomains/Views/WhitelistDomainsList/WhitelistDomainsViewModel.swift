@@ -56,7 +56,11 @@ final class WhitelistDomainsListViewModel: ObservableObject {
     }
     
     var protectionsIcon: Image {
-        isCurrentDomainProtected ? IOSAsset.Assets.icProtectionEnabled.swiftUIImage : IOSAsset.Assets.icProtectionDisabled.swiftUIImage
+        if isCurrentDomainProtected {
+            IOSAsset.Assets.icProtectionEnabled.swiftUIImage
+        } else {
+            IOSAsset.Assets.icProtectionDisabled.swiftUIImage
+        }
     }
     
     var createNewDomainPlaceholder: String {
