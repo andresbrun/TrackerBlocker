@@ -54,14 +54,17 @@ The project includes the following schemes:
 - Hide address bar when scrolling down the content to increase the visible area.
 
 ### Screenshots
-| Light Mode | Dark Mode |
-|------------|-----------|
-| ![Main View Light Mode](Apps/doc/images/main_view_light.png) | ![Main View Dark Mode](Apps/doc/images/main_view_dark.png) |
-| ![Whitelist View Light Mode](Apps/doc/images/whitelist_view_light.png) | ![Whitelist View Dark Mode](Apps/doc/images/whitelist_view_dark.png) |
+| Web View | Error View |  Whitelist View |
+|------------|-----------|-----------|
+| ![Main View Light Mode](Apps/doc/images/main_view_light.png) | ![Error View Light Mode](Apps/doc/images/error_view_light.png) | ![Whitelist View Light Mode](Apps/doc/images/whitelist_view_light.png) |
+| ![Main View Dark Mode](Apps/doc/images/main_view_dark.png) | ![Error View Dark Mode](Apps/doc/images/error_view_dark.png) | ![Whitelist View Dark Mode](Apps/doc/images/whitelist_view_dark.png) |
+
 
 ## Architecture
 
 ![iOS Architecture](Apps/doc/images/ios_architecture.jpg)
+
+* Interfaces have been omitted for simplicity's sake.
 
 ## Architectural Choices
 
