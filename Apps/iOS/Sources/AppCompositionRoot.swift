@@ -43,7 +43,7 @@ final class AppCompositionRoot {
     }
     
     func initializeRulesManagerIfNeeded() {
-        guard NSClassFromString("XCTestCase") == nil else { return }
+        guard !AppEnvironment.isRunningTests else { return }
         guard featureStore.isFeatureEnabled(.enhancedTrackingProtection) else { return }
         
         wkContentRuleListManager.onInit()

@@ -209,7 +209,10 @@ final class WebViewController: UIViewController {
         bindViewModel()
         setupKeyboardObservers()
         setupEstimatedProgressObserver()
-        viewModel.loadDefaultPage()
+        
+        if !AppEnvironment.isRunningTests {
+            viewModel.loadDefaultPage()
+        }
     }
     
     // MARK: - Private
