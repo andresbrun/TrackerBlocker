@@ -33,9 +33,11 @@ This document provides an overview of the implementation choices, architecture d
     ```bash
     mise install tuist
     ```
-  - Run `tuist generate` to create the `.xcodeproj` file.
+  - Run `tuist generate` to create the `.xcodeproj` and `.xcworkspace` files.
+  - Open the `.xcworkspace` file and build the project.
 - **Running Without Tuist**
   - Necessary files have been included to allow opening the project without relying on Tuist.
+  - Just open the `.xcworkspace` file and build the project.
 
 ## Build Configurations
 The project includes the following schemes:
