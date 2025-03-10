@@ -20,6 +20,10 @@ This document provides an overview of the implementation choices, architecture d
 - **Swift:** 5.10
 - **Tuist:** 4.43.2
 
+### Minimum iOS Version
+- **Minimum iOS Version:** 17.0
+- **Reason:** iOS 17 is supported by most of the devices, ensuring a wide range of compatibility while allowing the use of the latest features and improvements.
+
 ### Tuist
 - **Why Tuist?**
   - Tuist was chosen to manage the Xcode project efficiently and improve maintainability.
@@ -33,7 +37,7 @@ This document provides an overview of the implementation choices, architecture d
     ```bash
     mise install tuist
     ```
-  - Run `tuist generate` to create the `.xcodeproj` and `.xcworkspace` files.
+  - Run `tuist generate` inside Apps folder to create the `.xcodeproj` and `.xcworkspace` files.
   - Open the `.xcworkspace` file and build the project.
 - **Running Without Tuist**
   - Necessary files have been included to allow opening the project without relying on Tuist.
