@@ -1,9 +1,0 @@
-[settings]
-# configure `mise install` to always keep the downloaded archive
-always_keep_download = false
-always_keep_install = false
-verbose = false
-
-
-[tools]
-tuist = "4.43.2" # https://github.com/tuist/tuist/releases
