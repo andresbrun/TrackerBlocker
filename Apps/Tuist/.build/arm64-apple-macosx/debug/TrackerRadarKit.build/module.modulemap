@@ -1,0 +1,4 @@
+module TrackerRadarKit {
+    header "/Users/andres.brun/Documents/GitHub/TrackerBlockerMVP/Apps/Tuist/.build/arm64-apple-macosx/debug/TrackerRadarKit.build/TrackerRadarKit-Swift.h"
+    requires objc
+}

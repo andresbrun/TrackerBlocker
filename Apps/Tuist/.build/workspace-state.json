@@ -1,0 +1,27 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "trackerradarkit",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/duckduckgo/TrackerRadarKit",
+          "name" : "TrackerRadarKit"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "1403e17eeeb8493b92fb9d11eb8c846bb9776581",
+            "version" : "2.1.2"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "TrackerRadarKit"
+      }
+    ]
+  },
+  "version" : 6
+}
