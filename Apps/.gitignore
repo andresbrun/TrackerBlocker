@@ -51,20 +51,21 @@ DerivedData/
 *.perspectivev3
 !default.perspectivev3
 
+### Disabled to avoid depending on Tuist ###
 ### Xcode Patch ###
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcworkspace/contents.xcworkspacedata
-/*.gcno
+#*.xcodeproj/*
+#!*.xcodeproj/project.pbxproj
+#!*.xcodeproj/xcshareddata/
+#!*.xcworkspace/contents.xcworkspacedata
+#/*.gcno
 
 ### Projects ###
-*.xcodeproj
-*.xcworkspace
+#*.xcodeproj
+#*.xcworkspace
 
 ### Tuist derived files ###
 graph.dot
-Derived/
+# Derived/
 
 ### Tuist managed dependencies ###
-Tuist/.build
+# Tuist/.build
