@@ -91,7 +91,7 @@ public enum AppCustomConfiguration: String, CaseIterable {
     }
     
     private func targetSettings(for target: Target) -> SettingsDictionary {
-        let supportingFilesPath = "\(target.rawValue)/Supporting files"
+        let supportingFilesPath = "Supporting files"
         let custom: SettingsDictionary
         switch self {
         case .alphaDebug:

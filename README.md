@@ -37,11 +37,11 @@ This document provides an overview of the implementation choices, architecture d
     ```bash
     mise install tuist
     ```
-  - Run `tuist generate` inside Apps folder to create the `.xcodeproj` and `.xcworkspace` files.
+  - Run `tuist generate` inside Apps/iOS folder to create the `.xcodeproj` and `.xcworkspace` files.
   - Open the `.xcworkspace` file and build the project.
 - **Running Without Tuist**
   - Necessary files have been included to allow opening the project without relying on Tuist.
-  - Just open the `.xcworkspace` file and build the project.
+  - Just open the `.xcworkspace` file inside Apps/iOS and build the project.
 
 ## Build Configurations
 The project includes the following schemes:
@@ -62,13 +62,13 @@ The project includes the following schemes:
 ### Screenshots
 | Web View | Error View |  Whitelist View |
 |------------|-----------|-----------|
-| ![Main View Light Mode](Apps/doc/images/main_view_light.png) | ![Error View Light Mode](Apps/doc/images/error_view_light.png) | ![Whitelist View Light Mode](Apps/doc/images/whitelist_view_light.png) |
-| ![Main View Dark Mode](Apps/doc/images/main_view_dark.png) | ![Error View Dark Mode](Apps/doc/images/error_view_dark.png) | ![Whitelist View Dark Mode](Apps/doc/images/whitelist_view_dark.png) |
+| ![Main View Light Mode](Apps/iOS/doc/images/main_view_light.png) | ![Error View Light Mode](Apps/iOS/doc/images/error_view_light.png) | ![Whitelist View Light Mode](Apps/iOS/doc/images/whitelist_view_light.png) |
+| ![Main View Dark Mode](Apps/iOS/doc/images/main_view_dark.png) | ![Error View Dark Mode](Apps/iOS/doc/images/error_view_dark.png) | ![Whitelist View Dark Mode](Apps/iOS/doc/images/whitelist_view_dark.png) |
 
 
 ## Architecture
 
-![iOS Architecture](Apps/doc/images/ios_architecture.jpg)
+![iOS Architecture](Apps/iOS/doc/images/ios_architecture.jpg)
 
 * Interfaces have been omitted for simplicity's sake.
 
@@ -145,4 +145,4 @@ WKContentRuleListManager is doing too many thigs on the current implementation. 
 - Implement some screenshot tests for the UI of the WebViewController and the WhitelistDomainsListView.
 
 ## Tests
-- [reference](Apps/doc/TESTS.md)
+- [reference](Apps/iOS/doc/TESTS.md)

@@ -11,17 +11,11 @@ public extension Target {
             deploymentTargets: iOSDeploymentTargets,
             infoPlist: nil,
             sources: [
-                .glob("iOS/**", excluding: ["iOS/Tests/**"])
+                .glob("Sources/**")
             ],
             resources: [
-                .glob(
-                    pattern: "iOS/**/*.{storyboard,xib,strings,plist,xcassets,json,otf}",
-                    excluding: [
-                        "iOS/Supporting files/Infoplist/**",
-                        "iOS/Supporting files/Entitlements/**"
-                    ]
-                ),
-                .glob(pattern: "Resources/**")
+                .glob(pattern: "Resources/**"),
+                .glob(pattern: "Supporting files/*.lproj/*.{storyboard,strings}")
             ],
             dependencies: [
                 .external(name: "TrackerRadarKit")
@@ -44,7 +38,7 @@ public extension Target {
         additionalSources: [Path] = []
     ) -> Self {
         let sources: [Path] = [
-            "iOS/Tests/\(name)/**"
+            "Tests/\(name)/**"
         ] + additionalSources
         return .target(
             name: name,
