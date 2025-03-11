@@ -33,6 +33,7 @@ This document provides an overview of the implementation choices, architecture d
     ```bash
     curl -Ls https://install.mise.io | bash
     ```
+  - Go to Apps/iOS folder.
   - Use Mise to install Tuist:
     ```bash
     mise install tuist
