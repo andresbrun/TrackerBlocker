@@ -38,11 +38,9 @@ This document provides an overview of the implementation choices, architecture d
     mise install tuist
     ```
   - Run `tuist install` & `tuist generate` inside Apps/iOS folder to create the `.xcodeproj` and `.xcworkspace` files.
-  - Open the `.xcworkspace` file and build the project.
-- **Running Without Tuist**
-  - Necessary files have been included to allow opening the project without relying on Tuist.
-  - Run `git submodule update --init --recursive` to clone the TrackerRadarKit submodule.
-  - Just open the `.xcworkspace` file inside Apps/iOS and build the project.
+ * Open the `.xcworkspace` file and build the project.
+
+Disclaimer: I've tried to avoid depending on Tuist to share the project but I've found some limitations that I've not been able to overcome in time. Sorry in advance for that.
 
 ## Build Configurations
 The project includes the following schemes:

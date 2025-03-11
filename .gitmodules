@@ -1,3 +1,0 @@
-[submodule "Apps/iOS/Tuist/.build/checkouts/TrackerRadarKit"]
-    path = Apps/iOS/Tuist/.build/checkouts/TrackerRadarKit
-    url = https://github.com/duckduckgo/TrackerRadarKit
